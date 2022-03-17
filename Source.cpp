@@ -4,8 +4,8 @@
 using namespace std;
 
 #define EASY 4     // Matrix size is 4x4
-#define MEDIUM 6 // Matrix size is 6x6
-#define HARD 8   // Matrix size is 8x8
+#define MEDIUM 6   // Matrix size is 6x6
+#define HARD 8     // Matrix size is 8x8
 
 // void swap(auto &a, auto &b) { a = b; }
 
