@@ -5,12 +5,10 @@
 #include <windows.h>
 #include <string>
 
-#include <io.h>    // Call _setmode
+#include <io.h> // Call _setmode
 #include <fcntl.h> // _O_U16TEXT
 
 using namespace std;
-
-#define _O_U16TEXT 0x20000
 
 #define EASY 4   // Matrix size is 4x4
 #define MEDIUM 6 // Matrix size is 6x6
@@ -32,11 +30,9 @@ using namespace std;
 #define RED 4
 #define WHITE 7
 #define GRAY 8
-#define GREEN 10
-#define YELLOW 14
 
-#define WORD_WIDTH_SPACING 8
-#define WORD_HEIGHT_SPACING 3
+#define WORD_WIDTH_SPACING 2
+#define WORD_HEIGHT_SPACING 0
 
 // Set windows specific size scale with difficulty
 // Ref: https://codelearn.io/sharing/windowsh-va-ham-dinh-dang-console-p1
@@ -86,8 +82,21 @@ struct Selected
 void SetWindowSize(int difficulty)
 {
     // SHORT is the type of variable in WINAPI
-    SHORT width = difficulty * 11 + 40;  // Width of console
-    SHORT height = difficulty * 5 + 10; // Height of console
+    SHORT width;  // Width of console
+    SHORT height; // Height of console
+
+    switch (difficulty)
+    {
+    case EASY:
+        system("Mode con: cols=40 lines=20");
+        break;
+    case MEDIUM:
+        system("Mode con: cols=60 lines=30");
+        break;
+    case HARD:
+        system("Mode con: cols=80 lines=40");
+        break;
+    }
 
     HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -233,196 +242,12 @@ void printMatrix(char **a, int difficulty)
 // Calculate position of the word in the console
 int calculatePositionWidth(int posInMatrix, int difficulty)
 {
-    return (WORD_WIDTH_SPACING + 1) * posInMatrix + 4; // +4 is for the border
+    return (WORD_WIDTH_SPACING + 1) * posInMatrix;
 }
 
 int calculatePositionHeight(int posInMatrix, int difficulty)
 {
-    return (WORD_HEIGHT_SPACING + 1) * posInMatrix + 2; // +2 is for the border
-}
-
-// Print the matrix with color
-void drawMatrix(char **a, int difficulty)
-{
-    for (int i = 0; i < difficulty; i++)
-    {
-        for (int j = 0; j < difficulty; j++)
-        {
-            int posY = calculatePositionHeight(i, difficulty);
-            int posX = calculatePositionWidth(j, difficulty);
-            GoTo(posX, posY++);
-            wprintf(L" ------- \n");
-            GoTo(posX, posY++);
-            wprintf(L"|       |\n");
-            GoTo(posX, posY++);
-            wprintf(L"|   %c   | \n", a[i][j]);
-            GoTo(posX, posY++);
-            wprintf(L"|       |\n");
-            GoTo(posX, posY++);
-            wprintf(L" ------- \n");
-        }
-    }
-}
-
-void DrawCube(char **a, int difficulty, Selected A, int backgound_color, int text_color)
-{
-    SetColor(backgound_color, text_color);
-    // Draw the cube
-    int posY = calculatePositionHeight(A.posY, difficulty) + 1;
-    int posX = calculatePositionWidth(A.posX, difficulty) + 1;
-    GoTo(posX, posY++);
-    wprintf(L"       \n");
-    GoTo(posX, posY++);
-    wprintf(L"   %c   \n", a[A.posY][A.posX]);
-    GoTo(posX, posY++);
-    wprintf(L"       \n");
-    SetColor(BLACK, WHITE);
-}
-
-void DeleteCude(char **a, int difficulty, Selected A)
-{
-    SetColor(BLACK, BLACK);
-    int posY = calculatePositionHeight(A.posY, difficulty);
-    int posX = calculatePositionWidth(A.posX, difficulty);
-    GoTo(posX, posY++);
-    if ((A.posY - 1) > 0 && (a[A.posY - 1][A.posX] == ' '))
-        wprintf(L"        \n");
-    if (A.posY == 0)
-        wprintf(L"        \n");
-    GoTo(posX, posY++);
-    wprintf(L"|       |\n");
-    GoTo(posX, posY++);
-    wprintf(L"|       |\n");
-    GoTo(posX, posY++);
-    wprintf(L"|       |\n");
-    GoTo(posX, posY++);
-    if ((A.posY + 1) < difficulty && a[A.posY + 1][A.posX] == ' ')
-        wprintf(L"        \n");
-    if (A.posY == difficulty - 1)
-        wprintf(L"        \n");
-    SetColor(BLACK, WHITE);
-}
-
-void DrawHorizonLine(Selected A, Selected B)
-{
-    int startX = calculatePositionWidth(A.posX, EASY) + 5;
-    int endX = calculatePositionWidth(B.posX, EASY) + 3;
-    int horizonPos = calculatePositionHeight(A.posY, EASY) + 2;
-    GoTo(startX, horizonPos);
-    wprintf(L"←");
-    for (int i = startX + 1; i <= endX - 1; i++)
-    {
-        GoTo(i, horizonPos);
-        wprintf(L"-");
-    }
-    GoTo(endX, horizonPos);
-    wprintf(L"→");
-    return;
-}
-
-void DrawVerticalLine(Selected A, Selected B)
-{
-    int startY = calculatePositionHeight(A.posY, EASY) + 3;
-    int endY = calculatePositionHeight(B.posY, EASY) + 1;
-    int verticalPos = calculatePositionWidth(A.posX, EASY) + 4;
-    GoTo(verticalPos, startY);
-    wprintf(L"↑");
-    for (int i = startY + 1; i <= endY - 1; i++)
-    {
-        GoTo(verticalPos, i);
-        wprintf(L"|");
-    }
-    GoTo(verticalPos, endY);
-    wprintf(L"↓");
-    return;
-}
-
-// Solve I part horizontal
-bool checkLineV(char **a, Selected A, Selected B, int difficulty)
-{
-    // Check if A and B is in the same Column
-    if (A.posX != B.posX)
-    {
-        return false;
-    }
-
-    // This step already checked in Selected.prepare() function, A will always be higher than B
-    /*
-        int rowMax = max(A.posY, B.posY);
-        int rowMin = min(A.posY, B.posY);
-    */
-
-    for (int i = A.posY + 1; i < B.posY; i++)
-    {
-        if (a[i][A.posX] != ' ')
-            return false;
-    }
-    return true;
-}
-
-// Sole I part vertical
-bool checkLineH(char **a, Selected A, Selected B, int difficulty)
-{
-    // Check if A and B is in the same Row
-    if (A.posY != B.posY)
-    {
-        return false;
-    }
-
-    // This step already checked in Selected.prepare() function, A will always at the right than B
-    /*
-        int colMax = max(A.posX, B.posX);
-        int colMin = min(A.posX, B.posX);
-    */
-
-    for (int i = A.posX + 1; i < B.posX; i++)
-    {
-        if (a[A.posY][i] != ' ')
-            return false;
-    }
-    return true;
-}
-
-bool checkLine(char **&a, Selected A, Selected B, int difficulty)
-{
-
-    if (checkLineH(a, A, B, difficulty))
-    {
-        DrawCube(a, difficulty, A, GREEN, YELLOW);
-        DrawCube(a, difficulty, B, GREEN, YELLOW);
-        DrawHorizonLine(A, B);
-        GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
-        wprintf(L"This is I shape");
-        Sleep(1000);
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
-        for (int i = A.posX; i <= B.posX + 1; i++)
-        {
-            DeleteCude(a, difficulty, A);
-            A.posX = i;
-        }
-        return true;
-    }
-
-    if (checkLineV(a, A, B, difficulty))
-    {
-        DrawCube(a, difficulty, A, GREEN, YELLOW);
-        DrawCube(a, difficulty, B, GREEN, YELLOW);
-        DrawVerticalLine(A, B);
-        GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
-        wprintf(L"This is I shape");
-        Sleep(1000);
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
-        for (int i = A.posY; i <= B.posY + 1; i++)
-        {
-            DeleteCude(a, difficulty, A);
-            A.posY = i;
-        }
-        return true;
-    }
-
-    return false;
+    return (WORD_HEIGHT_SPACING + 1) * posInMatrix;
 }
 
 // Menu for the difficulty
@@ -437,37 +262,31 @@ char menuDifficulty()
 // Check if the matrix is solved
 
 // Check if 2 node selected is the same as the pair
-bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b)
+bool checkNodeIdentical(char **matrix, int difficulty, Selected &a, Selected &b)
 {
     bool identical = false;
 
-    identical = (matrix[a.posY][a.posX] == matrix[b.posY][b.posX]);
+    identical = (matrix[a.posX][a.posY] == matrix[b.posX][b.posY]);
 
     // Check if 2 node can link with together with pattern
-    if (identical)
-    {
-        if (checkLine(matrix, a, b, difficulty))
-        {
-            a.isSelected = false;
-            b.isSelected = false;
-            return true;
-        }
-        return false;
-    }
 
     // If 2 node is not the same, hightlight the 2 node with red backgound_color and delay for 1 second
     if (!identical)
     {
-        // Highlight the 2 node with red backgound_color
-        DrawCube(matrix, difficulty, a, RED, YELLOW);
-        DrawCube(matrix, difficulty, b, RED, YELLOW);
+        SetColor(RED, BLACK);
+        GoTo(calculatePositionWidth(a.posX, difficulty), a.posY);
+        wprintf(L" %c ", matrix[a.posY][a.posX]);
+        GoTo(calculatePositionWidth(b.posX, difficulty), b.posY);
+        wprintf(L" %c ", matrix[b.posY][b.posX]);
         wprintf(L"%c", 7);
         // Beep(440, 1000);
         Sleep(1000);
 
-        // Delete the red background_color
-        DrawCube(matrix, difficulty, a, BLACK, WHITE);
-        DrawCube(matrix, difficulty, b, BLACK, WHITE);
+        SetColor(BLACK, WHITE);
+        GoTo(calculatePositionWidth(a.posX, difficulty), a.posY);
+        wprintf(L" %c ", matrix[a.posY][a.posX]);
+        GoTo(calculatePositionWidth(b.posX, difficulty), b.posY);
+        wprintf(L" %c ", matrix[b.posY][b.posX]);
         a.isSelected = false;
         b.isSelected = false;
     }
@@ -479,11 +298,9 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
 void restoreNode(Selected &node, char **a, int difficulty)
 {
     // Restore the node to previous state
-    // GoTo(node.posX + node.posX * WORD_WIDTH_SPACING, node.posY + node.posY * WORD_HEIGHT_SPACING);
-    // SetColor(BLACK, WHITE);
-    // wprintf(L" %c ", a[node.posY][node.posX]);
-
-    DrawCube(a, difficulty, node, BLACK, WHITE);
+    GoTo(node.posX + node.posX * WORD_WIDTH_SPACING, node.posY + node.posY * WORD_HEIGHT_SPACING);
+    SetColor(BLACK, WHITE);
+    wprintf(L" %c ", a[node.posY][node.posX]);
 }
 
 // Restore line
@@ -505,10 +322,9 @@ bool moveToPosition(char **a, int difficulty, SHORT posX, SHORT posY)
         return true;
     }
 
-    // GoTo(calculatePositionWidth(posX, difficulty) + 3, calculatePositionHeight(posY, difficulty) + 2);
-    // SetColor(WHITE, BLACK);
-    // wprintf(L"►%c", a[posY][posX]);
-    DrawCube(a, difficulty, Selected{posX, posY}, WHITE, BLACK);
+    GoTo(posX + posX * WORD_WIDTH_SPACING, posY + posY * WORD_HEIGHT_SPACING);
+    SetColor(WHITE, BLACK);
+    wprintf(L"►%c ", a[posY][posX]);
 
     return false;
 }
@@ -516,11 +332,9 @@ bool moveToPosition(char **a, int difficulty, SHORT posX, SHORT posY)
 void hightlightNodeSelect(char **a, int difficulty, Selected node)
 {
     // Highlight the node
-    // GoTo(calculatePositionWidth(node.posX, difficulty), calculatePositionHeight(node.posY, difficulty));
-    // SetColor(AQUA, BLACK);
-    // wprintf(L" %c√", a[node.posY][node.posX]);
-
-    DrawCube(a, difficulty, node, AQUA, BLACK);
+    GoTo(node.posX + node.posX * WORD_WIDTH_SPACING, node.posY + node.posY * WORD_HEIGHT_SPACING);
+    SetColor(AQUA, BLACK);
+    wprintf(L" %c√", a[node.posY][node.posX]);
 }
 
 // Release the memory of matrix
@@ -539,7 +353,6 @@ int main(int argc, char **argv)
     int difficulty = HARD;
 
     system("cls");
-    SetWindowSize(difficulty);
     SetConsoleTitleW(L"Pikachu"); // Change console title (L is for Unicode)
     DisableResizeWindow();
     DisableMaximizeButton();
@@ -547,9 +360,8 @@ int main(int argc, char **argv)
     HideScrollbar();
     _setmode(_fileno(stdout), _O_U16TEXT);
 
-    srand (time(NULL));
     createMatrixPikachu(matrix, difficulty);
-    drawMatrix(matrix, difficulty);
+    printMatrix(matrix, difficulty);
 
     // Clear keyboard buffer
     fflush(stdin);
@@ -563,7 +375,9 @@ int main(int argc, char **argv)
     char ch = ENTER_KEY;
 
     // Hightlight the (0, 0) position
-    DrawCube(matrix, difficulty, Selected{0, 0}, WHITE, BLACK);
+    GoTo(0, 0);
+    SetColor(WHITE, BLACK);
+    wprintf(L"►%c ", matrix[0][0]);
 
     // Run loop for playing game
     while ((ch = GetArrow()) != ESC_KEY)
@@ -585,7 +399,7 @@ int main(int argc, char **argv)
         case ENTER_KEY:
             if (!firstNode.isSelected)
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 1);
+                GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING);
                 wprintf(L"First Node Selected\n");
                 firstNode.isSelected = true;
                 firstNode.posX = posX;
@@ -593,7 +407,7 @@ int main(int argc, char **argv)
             }
             else if (!secondNode.isSelected)
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 1);
+                GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING);
                 wprintf(L"Second Node Selected\n");
                 secondNode.isSelected = true;
                 secondNode.posX = posX;
@@ -601,7 +415,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+                GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING + 3);
                 wprintf(L"You can't select more than 2 nodes\n");
             }
             break;
@@ -611,6 +425,8 @@ int main(int argc, char **argv)
 
         // Restore the previous Node to original state
         restoreNode(tempNode, matrix, difficulty);
+        GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING + 1);
+        wprintf(L"Temp node is different from firstNode or secondNode\n");
 
         if (firstNode.isSelected)
         {
@@ -620,17 +436,16 @@ int main(int argc, char **argv)
         if (secondNode.isSelected)
         {
             hightlightNodeSelect(matrix, difficulty, secondNode);
-            firstNode.prepareSelected(secondNode);
 
             // Check if 2 nodes are selected is the same character
             if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode))
             {
-                GoTo(0,calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING + 2);
                 wprintf(L"2 nodes are identical\n");
             }
             else
             {
-                GoTo(0,calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING + 2);
                 wprintf(L"2 nodes are different\n");
             }
         }
@@ -643,10 +458,16 @@ int main(int argc, char **argv)
         tempNode.posX = posX;
         tempNode.posY = posY;
     }
+    restoreLine(difficulty + difficulty * WORD_HEIGHT_SPACING, 100);
+    restoreLine(difficulty + difficulty * WORD_HEIGHT_SPACING + 1, 100);
+    GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING);
+    // Print the result of first and second node
+    wprintf(L"First Node: %c %d %d\n", matrix[firstNode.posY][firstNode.posX], firstNode.posX, firstNode.posY);
+    wprintf(L"Second Node: %c %d %d\n", matrix[secondNode.posY][secondNode.posX], secondNode.posX, secondNode.posY);
 
     releaseMatrix(matrix, difficulty);
 
-    GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
+    GoTo(0, difficulty + difficulty * WORD_HEIGHT_SPACING + 2);
     SetColor(BLACK, AQUA);
     wprintf(L"Thanks for playing!\n");
 
