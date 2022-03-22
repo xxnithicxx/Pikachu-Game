@@ -49,15 +49,15 @@ unsigned char GetArrow()
 
 int main(int argc, char **argv)
 {
-    // unsigned char ch;
-    // while ((ch = GetArrow()) != ESC_KEY)
-    // {
-    //     printf("%02X : %c\n", ch, ch);
-    // }
+    unsigned char ch;
+    while ((ch = GetArrow()) != ESC_KEY)
+    {
+        printf("%02X : %c\n", ch, ch);
+    }
 
     // SHORT i = -1 ;
     // printf("%d\n", i);
-    cout << "Character: \u092E\n";
+    // cout << "Character: \u092E\n";
 
     getch();
     return 0;

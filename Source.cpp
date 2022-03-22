@@ -60,6 +60,11 @@ struct Selected
         other.posY = tempY;
     }
 
+    bool operator==(Selected other)
+    {
+        return (posX == other.posX && posY == other.posY);
+    }
+
     // Pre-increment for easy working
     // Node should be selected from the left to the right, top to bottom. The only exception is when two node is in the 2 and 4 zone in xy field, they will go from bottom to right.
     void prepareSelected(Selected &other)
@@ -70,11 +75,16 @@ struct Selected
 
         // If 2 node is not the same, swap their position
         // If this.x is higher than other.x, swap their position
-        if (posX > other.posX)
+        if (posX < other.posX && posY > other.posY)
         {
-            swap(other);
+            return;
         }
 
+        else if (posX > other.posX)
+        {
+            swap(other);
+            return;
+        }
         // If this.y is lower than other.y, swap their position
         else if (posY > other.posY)
         {
@@ -86,7 +96,7 @@ struct Selected
 void SetWindowSize(int difficulty)
 {
     // SHORT is the type of variable in WINAPI
-    SHORT width = difficulty * 11 + 40;  // Width of console
+    SHORT width = difficulty * 11 + 40; // Width of console
     SHORT height = difficulty * 5 + 10; // Height of console
 
     HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -217,19 +227,6 @@ void createMatrixPikachu(char **&a, int difficulty)
     }
 }
 
-// Print the matrix for testing
-void printMatrix(char **a, int difficulty)
-{
-    for (int i = 0; i < difficulty; i++)
-    {
-        for (int j = 0; j < difficulty; j++)
-        {
-            wprintf(L" %c ", a[i][j]);
-        }
-        wprintf(L"\n");
-    }
-}
-
 // Calculate position of the word in the console
 int calculatePositionWidth(int posInMatrix, int difficulty)
 {
@@ -305,6 +302,11 @@ void DeleteCude(char **a, int difficulty, Selected A)
 
 void DrawHorizonLine(Selected A, Selected B)
 {
+    if (A == B)
+        return;
+
+    A.prepareSelected(B);
+
     int startX = calculatePositionWidth(A.posX, EASY) + 5;
     int endX = calculatePositionWidth(B.posX, EASY) + 3;
     int horizonPos = calculatePositionHeight(A.posY, EASY) + 2;
@@ -322,6 +324,11 @@ void DrawHorizonLine(Selected A, Selected B)
 
 void DrawVerticalLine(Selected A, Selected B)
 {
+    if (A == B)
+        return;
+
+    A.prepareSelected(B);
+
     int startY = calculatePositionHeight(A.posY, EASY) + 3;
     int endY = calculatePositionHeight(B.posY, EASY) + 1;
     int verticalPos = calculatePositionWidth(A.posX, EASY) + 4;
@@ -352,6 +359,8 @@ bool checkLineV(char **a, Selected A, Selected B, int difficulty)
         int rowMin = min(A.posY, B.posY);
     */
 
+    A.prepareSelected(B);
+
     for (int i = A.posY + 1; i < B.posY; i++)
     {
         if (a[i][A.posX] != ' ')
@@ -375,6 +384,8 @@ bool checkLineH(char **a, Selected A, Selected B, int difficulty)
         int colMin = min(A.posX, B.posX);
     */
 
+    A.prepareSelected(B);
+
     for (int i = A.posX + 1; i < B.posX; i++)
     {
         if (a[A.posY][i] != ' ')
@@ -393,9 +404,12 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawHorizonLine(A, B);
         GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
         wprintf(L"This is I shape");
+
         Sleep(1000);
+
         a[A.posY][A.posX] = ' ';
         a[B.posY][B.posX] = ' ';
+
         for (int i = A.posX; i <= B.posX + 1; i++)
         {
             DeleteCude(a, difficulty, A);
@@ -411,14 +425,242 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawVerticalLine(A, B);
         GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
         wprintf(L"This is I shape");
+
         Sleep(1000);
+
         a[A.posY][A.posX] = ' ';
         a[B.posY][B.posX] = ' ';
+
         for (int i = A.posY; i <= B.posY + 1; i++)
         {
             DeleteCude(a, difficulty, A);
             A.posY = i;
         }
+        return true;
+    }
+
+    return false;
+}
+
+bool checkHLShape(char **a, Selected A, Selected B, int difficulty, Selected &C, bool &mode)
+{
+    // Take A is the coordinate root to start scanning
+    C = {A.posX, B.posY};
+
+    if (a[C.posY][C.posX] == ' ')
+    {
+        if (checkLineH(a, C, B, difficulty) && checkLineV(a, A, C, difficulty))
+        {
+            mode = true;
+            return true;
+        }
+    }
+
+    C = {B.posX, A.posY};
+
+    if (a[C.posY][C.posX] == ' ')
+    {
+        if (checkLineV(a, C, B, difficulty) && checkLineH(a, A, C, difficulty))
+        {
+            mode = false;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool checkLShape(char **a, Selected A, Selected B, int difficulty)
+{
+    Selected C;
+    bool mode;
+
+    A.prepareSelected(B);
+
+    if (checkHLShape(a, A, B, difficulty, C, mode))
+    {
+        if (mode)
+        {
+            DrawCube(a, difficulty, A, GREEN, YELLOW);
+            DrawCube(a, difficulty, B, GREEN, YELLOW);
+            DrawHorizonLine(B, C);
+            DrawVerticalLine(A, C);
+            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
+            wprintf(L"L H 1 Shape");
+
+            Sleep(1000);
+
+            a[A.posY][A.posX] = ' ';
+            a[B.posY][B.posX] = ' ';
+
+            for (B.posX; B.posX >= C.posX; B.posX--)
+            {
+                DeleteCude(a, difficulty, B);
+            }
+
+            C.prepareSelected(A);
+
+            for (C.posY; C.posY <= A.posY; C.posY++)
+            {
+                DeleteCude(a, difficulty, C);
+            }
+        }
+        else
+        {
+            DrawCube(a, difficulty, A, GREEN, YELLOW);
+            DrawCube(a, difficulty, B, GREEN, YELLOW);
+            DrawVerticalLine(C, B);
+            DrawHorizonLine(C, A);
+            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
+            wprintf(L"L H 2 Shape");
+
+            Sleep(1000);
+
+            a[A.posY][A.posX] = ' ';
+            a[B.posY][B.posX] = ' ';
+
+            for (A.posX; A.posX <= B.posX; A.posX++)
+            {
+                DeleteCude(a, difficulty, A);
+            }
+
+            C.prepareSelected(B);
+
+            for (C.posY; C.posY <= B.posY; C.posY++)
+            {
+                DeleteCude(a, difficulty, C);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+// Check horizontal rectangle
+bool checkHRectangle(char **a, Selected A, Selected B, int difficulty, Selected &C, Selected &D)
+{
+    // Take A is the coordinate root to start scanning
+    C = A;
+    D = {A.posX, B.posY};
+
+    int maxX = max(A.posX, B.posX);
+    int minX = min(A.posX, B.posX);
+
+    for (int i = minX; i <= maxX; i++)
+    {
+        if (a[C.posY][C.posX] != ' ' || a[D.posY][D.posX] != ' ')
+        {
+            C.posX++;
+            D.posX++;
+            continue;
+        }
+        if (checkLineV(a, C, D, difficulty))
+        {
+            if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+        C.posX++;
+        D.posX++;
+    }
+    return false;
+}
+
+bool checkVRectangle(char **a, Selected A, Selected B, int difficulty, Selected &C, Selected &D)
+{
+    // Take A is the coordinate root to start scanning
+    C = A;
+    D = {B.posX, A.posY};
+
+    int vec = (A.posY > B.posY) ? -1 : 1;
+
+    int maxY = max(A.posY, B.posY);
+    int minY = min(A.posY, B.posY);
+
+    for (int i = minY; i <= maxY; i++)
+    {
+        if (a[C.posY][C.posX] != ' ' || a[D.posY][D.posX] != ' ')
+        {
+            C.posY += vec;
+            D.posY += vec;
+            continue;
+        }
+        if (checkLineH(a, C, D, difficulty))
+        {
+            if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+        C.posY += vec;
+        D.posY += vec;
+    }
+    return false;
+}
+
+bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
+{
+    Selected temp1, temp2;
+
+    A.prepareSelected(B);
+
+    if (checkHRectangle(a, A, B, difficulty, temp1, temp2))
+    {
+        DrawVerticalLine(temp1, temp2);
+        DrawHorizonLine(A, temp1);
+        DrawHorizonLine(temp2, B);
+        GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+        wprintf(L"This is Z shape\n");
+        Sleep(1000);
+
+        for (SHORT i = A.posX; i <= temp1.posX; i++)
+        {
+            DeleteCude(a, difficulty, Selected{i, A.posY});
+        }
+        for (SHORT i = temp2.posX; i <= B.posX; i++)
+        {
+            DeleteCude(a, difficulty, Selected{i, B.posY});
+        }
+        temp1.prepareSelected(temp2);
+        for (SHORT i = temp1.posY; i <= temp2.posY; i++)
+        {
+            DeleteCude(a, difficulty, Selected{temp1.posX, i});
+        }
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
+        return true;
+    }
+    if (checkVRectangle(a, A, B, difficulty, temp1, temp2))
+    {
+        DrawHorizonLine(temp1, temp2);
+        DrawVerticalLine(A, temp1);
+        DrawVerticalLine(temp2, B);
+        GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+        wprintf(L"This is Z shape\n");
+
+        Sleep(1000);
+
+        for (SHORT i = temp1.posX; i <= temp2.posX; i++)
+        {
+            DeleteCude(a, difficulty, Selected{i, temp1.posY});
+        }
+        A.prepareSelected(temp1);
+        for (SHORT i = A.posY; i <= temp1.posY; i++)
+        {
+            DeleteCude(a, difficulty, Selected{A.posX, i});
+        }
+        B.prepareSelected(temp2);
+        for (SHORT i = B.posY; i <= temp2.posY; i++)
+        {
+            DeleteCude(a, difficulty, Selected{B.posX, i});
+        }
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
         return true;
     }
 
@@ -452,6 +694,21 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
             b.isSelected = false;
             return true;
         }
+        else if (checkLShape(matrix, a, b, difficulty))
+        {
+            a.isSelected = false;
+            b.isSelected = false;
+            return true;
+        }
+        else if (checkRectangle(matrix, a, b, difficulty))
+        {
+            a.isSelected = false;
+            b.isSelected = false;
+            return true;
+        }
+
+        a.isSelected = false;
+        b.isSelected = false;
         return false;
     }
 
@@ -475,17 +732,6 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
     return identical;
 }
 
-// Restore the Node to previous state
-void restoreNode(Selected &node, char **a, int difficulty)
-{
-    // Restore the node to previous state
-    // GoTo(node.posX + node.posX * WORD_WIDTH_SPACING, node.posY + node.posY * WORD_HEIGHT_SPACING);
-    // SetColor(BLACK, WHITE);
-    // wprintf(L" %c ", a[node.posY][node.posX]);
-
-    DrawCube(a, difficulty, node, BLACK, WHITE);
-}
-
 // Restore line
 void restoreLine(SHORT line, unsigned int numberOfChars)
 {
@@ -505,22 +751,9 @@ bool moveToPosition(char **a, int difficulty, SHORT posX, SHORT posY)
         return true;
     }
 
-    // GoTo(calculatePositionWidth(posX, difficulty) + 3, calculatePositionHeight(posY, difficulty) + 2);
-    // SetColor(WHITE, BLACK);
-    // wprintf(L"►%c", a[posY][posX]);
     DrawCube(a, difficulty, Selected{posX, posY}, WHITE, BLACK);
 
     return false;
-}
-
-void hightlightNodeSelect(char **a, int difficulty, Selected node)
-{
-    // Highlight the node
-    // GoTo(calculatePositionWidth(node.posX, difficulty), calculatePositionHeight(node.posY, difficulty));
-    // SetColor(AQUA, BLACK);
-    // wprintf(L" %c√", a[node.posY][node.posX]);
-
-    DrawCube(a, difficulty, node, AQUA, BLACK);
 }
 
 // Release the memory of matrix
@@ -536,7 +769,7 @@ void releaseMatrix(char **a, int difficulty)
 int main(int argc, char **argv)
 {
     char **matrix = NULL;
-    int difficulty = HARD;
+    int difficulty = EASY;
 
     system("cls");
     SetWindowSize(difficulty);
@@ -547,7 +780,7 @@ int main(int argc, char **argv)
     HideScrollbar();
     _setmode(_fileno(stdout), _O_U16TEXT);
 
-    srand (time(NULL));
+    srand(time(NULL));
     createMatrixPikachu(matrix, difficulty);
     drawMatrix(matrix, difficulty);
 
@@ -571,18 +804,38 @@ int main(int argc, char **argv)
         switch (ch)
         {
         case ARROW_UP:
+            if (posY - 1 < 0)
+            {
+                posY = difficulty;
+            }
             posY--;
             break;
         case ARROW_DOWN:
+            if (posY + 1 >= difficulty)
+            {
+                posY = 0;
+                break;
+            }
             posY++;
             break;
         case ARROW_LEFT:
+            if (posX - 1 < 0)
+            {
+                posX = difficulty;
+            }
             posX--;
             break;
         case ARROW_RIGHT:
+            if (posX + 1 >= difficulty)
+            {
+                posX = 0;
+                break;
+            }
             posX++;
             break;
         case ENTER_KEY:
+            if (matrix[posY][posX] == ' ')
+                break;
             if (!firstNode.isSelected)
             {
                 GoTo(0, calculatePositionHeight(difficulty, difficulty) + 1);
@@ -610,27 +863,27 @@ int main(int argc, char **argv)
         }
 
         // Restore the previous Node to original state
-        restoreNode(tempNode, matrix, difficulty);
+        DrawCube(matrix, difficulty, tempNode, BLACK, WHITE);
 
         if (firstNode.isSelected)
         {
-            hightlightNodeSelect(matrix, difficulty, firstNode);
+            DrawCube(matrix, difficulty, firstNode, AQUA, BLACK);
         }
 
         if (secondNode.isSelected)
         {
-            hightlightNodeSelect(matrix, difficulty, secondNode);
+            DrawCube(matrix, difficulty, secondNode, AQUA, BLACK);
             firstNode.prepareSelected(secondNode);
 
             // Check if 2 nodes are selected is the same character
             if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode))
             {
-                GoTo(0,calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
                 wprintf(L"2 nodes are identical\n");
             }
             else
             {
-                GoTo(0,calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
                 wprintf(L"2 nodes are different\n");
             }
         }
