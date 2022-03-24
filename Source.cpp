@@ -230,12 +230,82 @@ void createMatrixPikachu(char **&a, int difficulty)
 // Calculate position of the word in the console
 int calculatePositionWidth(int posInMatrix, int difficulty)
 {
-    return (WORD_WIDTH_SPACING + 1) * posInMatrix + 4; // +4 is for the border
+    return (WORD_WIDTH_SPACING + 1) * posInMatrix + 8; // +8 is for the border
 }
 
 int calculatePositionHeight(int posInMatrix, int difficulty)
 {
-    return (WORD_HEIGHT_SPACING + 1) * posInMatrix + 2; // +2 is for the border
+    return (WORD_HEIGHT_SPACING + 1) * posInMatrix + 4; // +4 is for the border
+}
+
+void DrawBorder(int difficulty)
+{
+    int minX = calculatePositionWidth(-1, difficulty) + 3;
+    int maxX = calculatePositionWidth(difficulty, difficulty) + 4;
+    int minY = calculatePositionHeight(-1, difficulty) + 1;
+    int maxY = calculatePositionHeight(difficulty, difficulty) + 5;
+
+    // Draw top border
+    GoTo(minX, minY);
+    SetColor(BLACK, WHITE);
+
+    wprintf(L"┌");
+    for (int i = minX + 1; i <= maxX; i++)
+    {
+        GoTo(i, minY);
+        wprintf(L"-");
+    }
+    GoTo(maxX + 1, minY);
+    wprintf(L"┐");
+
+    // Draw bottom border
+    GoTo(minX, maxY);
+    wprintf(L"└");
+    for (int i = minX + 1; i <= maxX; i++)
+    {
+        GoTo(i, maxY);
+        wprintf(L"-");
+    }
+    GoTo(maxX + 1, maxY);
+    wprintf(L"┘");
+
+    // Draw left border
+    for (int i = minY + 1; i < maxY; i++)
+    {
+        GoTo(minX, i);
+        wprintf(L"|");
+    }
+
+    // Draw right border
+    for (int i = minY + 1; i < maxY; i++)
+    {
+        GoTo(maxX + 1, i);
+        wprintf(L"|");
+    }
+}
+
+// Restore line
+void RestoreLine(int posX, int posY, unsigned int numberOfChars, int difficulty)
+{
+    GoTo(posX, posY);
+    SetColor(BLACK, WHITE);
+    for (int i = 0; i < numberOfChars; i++)
+    {
+        GoTo(posX + i, posY);
+        wprintf(L" ");
+    }
+}
+
+// Restore column
+void RestoreColumn(int posX, int posY, unsigned int numberOfChars, int difficulty)
+{
+    GoTo(posX, posY);
+    SetColor(BLACK, WHITE);
+    for (int i = 0; i < numberOfChars; i++)
+    {
+        GoTo(posX, posY + i);
+        wprintf(L" ");
+    }
 }
 
 // Print the matrix with color
@@ -402,7 +472,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawCube(a, difficulty, A, GREEN, YELLOW);
         DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawHorizonLine(A, B);
-        GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
         wprintf(L"This is I shape");
 
         Sleep(1000);
@@ -423,7 +493,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawCube(a, difficulty, A, GREEN, YELLOW);
         DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawVerticalLine(A, B);
-        GoTo(4, calculatePositionHeight(difficulty, difficulty) + 4);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
         wprintf(L"This is I shape");
 
         Sleep(1000);
@@ -607,10 +677,12 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
     if (checkHRectangle(a, A, B, difficulty, temp1, temp2))
     {
+        DrawCube(a, difficulty, A, GREEN, YELLOW);
+        DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawVerticalLine(temp1, temp2);
         DrawHorizonLine(A, temp1);
         DrawHorizonLine(temp2, B);
-        GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
         wprintf(L"This is Z shape\n");
         Sleep(1000);
 
@@ -635,10 +707,12 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
     }
     if (checkVRectangle(a, A, B, difficulty, temp1, temp2))
     {
+        DrawCube(a, difficulty, A, GREEN, YELLOW);
+        DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawHorizonLine(temp1, temp2);
         DrawVerticalLine(A, temp1);
         DrawVerticalLine(temp2, B);
-        GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
         wprintf(L"This is Z shape\n");
 
         Sleep(1000);
@@ -664,6 +738,187 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
         return true;
     }
 
+    return false;
+}
+
+// Return true if U left, false if U right
+bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected &C, Selected &D)
+{
+    SHORT difficultySHORT = (SHORT)difficulty;
+
+    SHORT minY = min(A.posY, B.posY);
+    SHORT maxY = max(A.posY, B.posY);
+
+    C = {-1, minY};
+    D = {-1, maxY};
+
+    // if (a[C.posY][C.posX] == a[A.posY][A.posX] &&)
+    if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+    {
+        return true;
+    }
+
+    C = {difficultySHORT, minY};
+    D = {difficultySHORT, maxY};
+
+    if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+// Return true if U up, false if U down
+bool checkVerticalU(char **a, Selected A, Selected B, int difficulty, Selected &C, Selected &D)
+{
+    SHORT difficultySHORT = (SHORT)difficulty;
+
+    SHORT minX = min((SHORT)A.posX, B.posX);
+    SHORT maxX = max((SHORT)A.posX, B.posX);
+
+    C = {minX, -1};
+    D = {maxX, -1};
+
+    if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+    {
+        return true;
+    }
+
+    C = {minX, difficultySHORT};
+    D = {maxX, difficultySHORT};
+
+    if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool checkUShape(char **a, Selected A, Selected B, int difficulty)
+{
+    Selected C;
+    Selected D;
+
+    A.prepareSelected(B);
+
+    if (checkHorizontalU(a, A, B, difficulty, C, D))
+    {
+        DrawCube(a, difficulty, A, GREEN, YELLOW);
+        DrawCube(a, difficulty, B, GREEN, YELLOW);
+        DrawHorizonLine(A, C);
+        DrawHorizonLine(B, D);
+        DrawVerticalLine(C, D);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
+        wprintf(L"This is Z shape\n");
+
+        Sleep(1000);
+
+        SHORT minX = min(A.posX, C.posX);
+        SHORT maxX = max(A.posX, C.posX);
+
+        for (SHORT i = minX + 1; i < maxX; i++)
+        {
+            DeleteCude(a, difficulty, Selected{i, A.posY});
+        }
+
+        minX = min(B.posX, D.posX);
+        maxX = max(B.posX, D.posX);
+
+        for (SHORT i = minX + 1; i < maxX; i++)
+        {
+            DeleteCude(a, difficulty, Selected{i, B.posY});
+        }
+
+        DeleteCude(a, difficulty, A);
+        DeleteCude(a, difficulty, B);
+
+        if (C.posX == -1)
+        {
+            int posXDel = calculatePositionWidth(-1, difficulty) + 4;
+            int posYDel = calculatePositionHeight(C.posY, difficulty) + 2;
+            int sizeofLine = (D.posY - C.posY) * (WORD_HEIGHT_SPACING + 1) + 2;
+
+            for (int i = 0; i < 5; i++)
+            {
+                RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
+            }
+        }
+        else
+        {
+            int posXDel = calculatePositionWidth(difficulty, difficulty);
+            int posYDel = calculatePositionHeight(C.posY, difficulty) + 2;
+            int sizeofLine = (D.posY - C.posY) * (WORD_HEIGHT_SPACING + 1) + 2;
+            for (int i = 0; i < 5; i++)
+            {
+                RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
+            }
+        }
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
+        return true;
+    }
+
+    if (checkVerticalU(a, A, B, difficulty, C, D))
+    {
+        DrawCube(a, difficulty, A, GREEN, YELLOW);
+        DrawCube(a, difficulty, B, GREEN, YELLOW);
+        DrawVerticalLine(A, C);
+        DrawVerticalLine(B, D);
+        DrawHorizonLine(C, D);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
+        wprintf(L"This is Z shape\n");
+
+        Sleep(1000);
+
+        SHORT minY = min(A.posY, C.posY);
+        SHORT maxY = max(A.posY, C.posY);
+
+        for (SHORT i = minY + 1; i < maxY; i++)
+        {
+            DeleteCude(a, difficulty, Selected{A.posX, i});
+        }
+
+        minY = min(B.posY, D.posY);
+        maxY = max(B.posY, D.posY);
+
+        for (SHORT i = minY + 1; i < maxY; i++)
+        {
+            DeleteCude(a, difficulty, Selected{B.posX, i});
+        }
+
+        DeleteCude(a, difficulty, A);
+        DeleteCude(a, difficulty, B);
+
+        if (C.posY == -1)
+        {
+            int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
+            int posYDel = calculatePositionHeight(-1, difficulty) + 2;
+            int sizeofLine = (D.posX - C.posX) * (WORD_WIDTH_SPACING + 1) + 2;
+            for (int i = 0; i < 2; i++)
+            {
+                RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
+            }
+        }
+        else
+        {
+            int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
+            int posYDel = calculatePositionHeight(C.posY, difficulty) + 1;
+            int sizeofLine = (D.posX - C.posX) * (WORD_WIDTH_SPACING + 1) + 2;
+            for (int i = 0; i < 2; i++)
+            {
+                RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
+            }
+        }
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
+        return true;
+    }
     return false;
 }
 
@@ -706,7 +961,12 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
             b.isSelected = false;
             return true;
         }
-
+        else if (checkUShape(matrix, a, b, difficulty))
+        {
+            a.isSelected = false;
+            b.isSelected = false;
+            return true;
+        }
         a.isSelected = false;
         b.isSelected = false;
         return false;
@@ -718,8 +978,8 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
         // Highlight the 2 node with red backgound_color
         DrawCube(matrix, difficulty, a, RED, YELLOW);
         DrawCube(matrix, difficulty, b, RED, YELLOW);
-        wprintf(L"%c", 7);
-        // Beep(440, 1000);
+        // wprintf(L"%c", 7);
+        Beep(440, 1000);
         Sleep(1000);
 
         // Delete the red background_color
@@ -730,17 +990,6 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
     }
 
     return identical;
-}
-
-// Restore line
-void restoreLine(SHORT line, unsigned int numberOfChars)
-{
-    GoTo(0, line);
-    SetColor(BLACK, WHITE);
-    for (int i = 0; i < numberOfChars; i++)
-    {
-        wprintf(L" ");
-    }
 }
 
 // Move the cursor to the position with matrix and check if the position is valid
@@ -783,6 +1032,7 @@ int main(int argc, char **argv)
     srand(time(NULL));
     createMatrixPikachu(matrix, difficulty);
     drawMatrix(matrix, difficulty);
+    DrawBorder(difficulty);
 
     // Clear keyboard buffer
     fflush(stdin);
@@ -838,7 +1088,7 @@ int main(int argc, char **argv)
                 break;
             if (!firstNode.isSelected)
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 1);
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
                 wprintf(L"First Node Selected\n");
                 firstNode.isSelected = true;
                 firstNode.posX = posX;
@@ -846,7 +1096,7 @@ int main(int argc, char **argv)
             }
             else if (!secondNode.isSelected)
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 1);
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
                 wprintf(L"Second Node Selected\n");
                 secondNode.isSelected = true;
                 secondNode.posX = posX;
@@ -854,7 +1104,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
                 wprintf(L"You can't select more than 2 nodes\n");
             }
             break;
