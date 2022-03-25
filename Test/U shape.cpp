@@ -62,7 +62,7 @@ struct Selected
 
         // If 2 node is not the same, swap their position
         // If this.x is higher than other.x, swap their position
-        if (posX < other.posX && posY > other.posY)
+        if (posX < other.posX && posY > other.posY) // if ⬋ vector change it to ⬈ vector
         {
             return;
         }
@@ -359,6 +359,12 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
     C = {-1, minY};
     D = {-1, maxY};
 
+    // Exception: if A.posY is higher than B.posY ("⬈" vector)
+    if (A.posY > B.posY && A.posX < B.posX)
+    {
+        C.swap(D);
+    }
+
     // if (a[C.posY][C.posX] == a[A.posY][A.posX] &&)
     if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
     {
@@ -367,6 +373,12 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
 
     C = {difficultySHORT, minY};
     D = {difficultySHORT, maxY};
+
+    // Exception: if A.posY is higher than B.posY ("⬈" vector)
+    if (A.posY > B.posY && A.posX < B.posX)
+    {
+        C.swap(D);
+    }
 
     if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
     {
@@ -419,6 +431,12 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         wprintf(L"This is Z shape\n");
 
         Sleep(1000);
+
+        // Exception: if A.posY is higher than B.posY ("⬈" vector)
+        if (A.posY > B.posY && A.posX < B.posX)
+        {
+            C.swap(D);
+        }
 
         SHORT minX = min(A.posX, C.posX);
         SHORT maxX = max(A.posX, C.posX);
@@ -552,10 +570,10 @@ int main(int argc, char **argv)
     _setmode(_fileno(stdout), _O_U16TEXT);
 
     char test[EASY][EASY]{
-        {' ', ' ', 'K', 'O'},
-        {' ', 'F', 'K', 'S'},
-        {' ', ' ', ' ', 'T'},
-        {' ', 'K', ' ', 'O'}};
+        {'H', ' ', 'X', ' '},
+        {' ', 'K', ' ', ' T'},
+        {' ', ' ', ' ', ' '},
+        {'F', 'K', ' ', 'K'}};
 
     char **matrix = (char **)malloc(sizeof(char *) * EASY);
     for (int i = 0; i < EASY; i++)

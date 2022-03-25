@@ -752,6 +752,12 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
     C = {-1, minY};
     D = {-1, maxY};
 
+    // Exception: if A.posY is higher than B.posY ("⬈" vector)
+    if (A.posY > B.posY && A.posX < B.posX)
+    {
+        C.swap(D);
+    }
+
     // if (a[C.posY][C.posX] == a[A.posY][A.posX] &&)
     if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
     {
@@ -760,6 +766,12 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
 
     C = {difficultySHORT, minY};
     D = {difficultySHORT, maxY};
+
+    // Exception: if A.posY is higher than B.posY ("⬈" vector)
+    if (A.posY > B.posY && A.posX < B.posX)
+    {
+        C.swap(D);
+    }
 
     if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
     {
@@ -814,6 +826,12 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         wprintf(L"This is Z shape\n");
 
         Sleep(1000);
+
+        // Exception: if A.posY is higher than B.posY ("⬈" vector)
+        if (A.posY > B.posY && A.posX < B.posX)
+        {
+            C.swap(D);
+        }
 
         SHORT minX = min(A.posX, C.posX);
         SHORT maxX = max(A.posX, C.posX);
@@ -967,6 +985,13 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
             b.isSelected = false;
             return true;
         }
+        DrawCube(matrix, difficulty, a, RED, YELLOW);
+        DrawCube(matrix, difficulty, b, RED, YELLOW);
+        Beep(440, 1000);
+        Sleep(1000);
+
+        DrawCube(matrix, difficulty, a, BLACK, WHITE);
+        DrawCube(matrix, difficulty, b, BLACK, WHITE);
         a.isSelected = false;
         b.isSelected = false;
         return false;
