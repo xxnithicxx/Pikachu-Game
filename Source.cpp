@@ -195,38 +195,6 @@ unsigned char GetArrow()
     return ch;
 }
 
-void createMatrixPikachu(char **&a, int difficulty)
-{
-    // Create a square matrix for the given difficulty
-    a = (char **)malloc(sizeof(char *) * difficulty);
-
-    for (int i = 0; i < difficulty; i++)
-    {
-        a[i] = (char *)malloc(sizeof(char) * difficulty);
-    }
-
-    // Create a array of pair interger pairs
-    int sizeOfPair = difficulty * difficulty;
-    char arrPair[sizeOfPair];
-    for (int i = 0; i < sizeOfPair; i++)
-    {
-        arrPair[i] = i / 2 + 'A';
-    }
-
-    for (int i = 0; i < difficulty; i++)
-    {
-        for (int j = 0; j < difficulty; j++)
-        {
-            int posInPairArray = rand() % (sizeOfPair);
-            a[i][j] = arrPair[posInPairArray];
-
-            // Swap the value in posInPairArray to the end of array and decrease the size of array
-            swap(arrPair[posInPairArray], arrPair[sizeOfPair - 1]);
-            sizeOfPair--;
-        }
-    }
-}
-
 // Calculate position of the word in the console
 int calculatePositionWidth(int posInMatrix, int difficulty)
 {
@@ -778,6 +746,28 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
         return true;
     }
 
+    for (C.posX = 1, D.posX = 1; D.posX < B.posX && C.posX < A.posX; C.posX++, D.posX++)
+    {
+        if (checkLineV(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
+    for (C.posX = difficulty - 1, D.posX = difficulty - 1; D.posX > B.posX && C.posX > A.posX; C.posX--, D.posX--)
+    {
+        if (checkLineV(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -803,6 +793,28 @@ bool checkVerticalU(char **a, Selected A, Selected B, int difficulty, Selected &
     if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
     {
         return true;
+    }
+
+    for (C.posY = 1, D.posY = 1; D.posY < B.posY && C.posY < A.posY; C.posY++, D.posY++)
+    {
+        if (checkLineH(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
+    for (C.posY = difficulty - 1, D.posY = difficulty - 1; D.posY > B.posY && C.posY > A.posY; C.posY--, D.posY--)
+    {
+        if (checkLineH(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
     }
 
     return false;
@@ -863,14 +875,21 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
             }
         }
+        else if (C.posX == difficulty)
+        {
+            int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
+            int posYDel = calculatePositionHeight(C.posY, difficulty) + 1;
+            int sizeofLine = (D.posX - C.posX) * (WORD_WIDTH_SPACING + 1) + 2;
+            for (int i = 0; i < 2; i++)
+            {
+                RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
+            }
+        }
         else
         {
-            int posXDel = calculatePositionWidth(difficulty, difficulty);
-            int posYDel = calculatePositionHeight(C.posY, difficulty) + 2;
-            int sizeofLine = (D.posY - C.posY) * (WORD_HEIGHT_SPACING + 1) + 2;
-            for (int i = 0; i < 5; i++)
+            for (C.posY; C.posY <= D.posY; C.posY++)
             {
-                RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
+                DeleteCude(a, difficulty, C);
             }
         }
 
@@ -921,7 +940,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
             }
         }
-        else
+        else if (C.posY == difficulty)
         {
             int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
             int posYDel = calculatePositionHeight(C.posY, difficulty) + 1;
@@ -929,6 +948,13 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
             for (int i = 0; i < 2; i++)
             {
                 RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
+            }
+        }
+        else
+        {
+            for (C.posX; C.posX <= D.posX; C.posX++)
+            {
+                DeleteCude(a, difficulty, C);
             }
         }
 
@@ -950,6 +976,20 @@ char menuDifficulty()
 // Menu for the game
 
 // Check if the matrix is solved
+bool isSolved(char **a, int difficulty)
+{
+    for (int i = 0; i < difficulty; i++)
+    {
+        for (int j = 0; j < difficulty; j++)
+        {
+            if (a[i][j] != ' ')
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
 // Check if 2 node selected is the same as the pair
 bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b)
@@ -1015,6 +1055,81 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
     }
 
     return identical;
+}
+
+// Check if the matrix can be solved
+bool checkSolve(char **a, int difficulty)
+{
+    // Find pair of identical elements in the matrix, run the checkNodeIdentical function to check if the pair can link with pattern, if true, delete the pair and start again
+    static char **temp = NULL;
+    temp = (char **)malloc(sizeof(char *) * difficulty);
+    for (int i = 0; i < difficulty; i++)
+    {
+        temp[i] = (char *)malloc(sizeof(char) * difficulty);
+    }
+    for (int i = 0; i < difficulty; i++)
+    {
+        for (int j = 0; j < difficulty; j++)
+        {
+            temp[i][j] = a[i][j];
+        }
+    }
+
+    for (SHORT i = 0; i < difficulty; i++)
+    {
+        for (SHORT j = 0; j < difficulty; j++)
+        {
+            for (SHORT k = 0; k < difficulty; k++)
+            {
+                for (SHORT l = 0; l < difficulty; l++)
+                {
+                    if (a[i][j] != a[k][l])
+                    {
+                        continue;
+                    }
+
+                    Selected A = {j, i};
+                    Selected B = {l, k};
+
+
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+void createMatrixPikachu(char **&a, int difficulty)
+{
+    // Create a square matrix for the given difficulty
+    a = (char **)malloc(sizeof(char *) * difficulty);
+
+    for (int i = 0; i < difficulty; i++)
+    {
+        a[i] = (char *)malloc(sizeof(char) * difficulty);
+    }
+
+    // Create a array of pair interger pairs
+    int sizeOfPair = difficulty * difficulty;
+    char arrPair[sizeOfPair];
+    for (int i = 0; i < sizeOfPair; i++)
+    {
+        arrPair[i] = i / 2 + 'A';
+    }
+
+    for (int i = 0; i < difficulty; i++)
+    {
+        for (int j = 0; j < difficulty; j++)
+        {
+            int posInPairArray = rand() % (sizeOfPair);
+            a[i][j] = arrPair[posInPairArray];
+
+            // Swap the value in posInPairArray to the end of array and decrease the size of array
+            swap(arrPair[posInPairArray], arrPair[sizeOfPair - 1]);
+            sizeOfPair--;
+        }
+    }
 }
 
 // Move the cursor to the position with matrix and check if the position is valid
@@ -1153,13 +1268,19 @@ int main(int argc, char **argv)
             // Check if 2 nodes are selected is the same character
             if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode))
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
                 wprintf(L"2 nodes are identical\n");
             }
             else
             {
-                GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
                 wprintf(L"2 nodes are different\n");
+            }
+
+            if (isSolved(matrix, difficulty))
+            {
+                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
+                wprintf(L"You win\n");
             }
         }
 

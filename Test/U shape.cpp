@@ -385,6 +385,28 @@ bool checkHorizontalU(char **a, Selected A, Selected B, int difficulty, Selected
         return true;
     }
 
+    for (C.posX = 1, D.posX = 1; D.posX < B.posX && C.posX < A.posX; C.posX++, D.posX++)
+    {
+        if (checkLineV(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
+    for (C.posX = difficulty - 1, D.posX = difficulty - 1; D.posX > B.posX && C.posX > A.posX; C.posX--, D.posX--)
+    {
+        if (checkLineV(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineH(a, A, C, difficulty) && checkLineH(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -410,6 +432,28 @@ bool checkVerticalU(char **a, Selected A, Selected B, int difficulty, Selected &
     if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
     {
         return true;
+    }
+
+    for (C.posY = 1, D.posY = 1; D.posY < B.posY && C.posY < A.posY; C.posY++, D.posY++)
+    {
+        if (checkLineH(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
+    }
+
+    for (C.posY = difficulty - 1, D.posY = difficulty - 1; D.posY > B.posY && C.posY > A.posY; C.posY--, D.posY--)
+    {
+        if (checkLineH(a, C, D, difficulty) && a[C.posY][C.posX] == ' ' && a[D.posY][D.posX] == ' ')
+        {
+            if (checkLineV(a, A, C, difficulty) && checkLineV(a, B, D, difficulty))
+            {
+                return true;
+            }
+        }
     }
 
     return false;
@@ -468,7 +512,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
             }
         }
-        else
+        else if (C.posX == difficulty)
         {
             int posXDel = calculatePositionWidth(difficulty, difficulty);
             int posYDel = calculatePositionHeight(C.posY, difficulty) + 2;
@@ -476,6 +520,13 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
             for (int i = 0; i < 5; i++)
             {
                 RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
+            }
+        }
+        else
+        {
+            for (C.posY; C.posY <= D.posY; C.posY++)
+            {
+                DeleteCude(a, difficulty, C);
             }
         }
 
@@ -524,7 +575,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
             }
         }
-        else
+        else if (C.posY == difficulty)
         {
             int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
             int posYDel = calculatePositionHeight(C.posY, difficulty) + 1;
@@ -534,6 +585,15 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
             }
         }
+        else
+        {
+            for (C.posX; C.posX <= D.posX; C.posX++)
+            {
+                DeleteCude(a, difficulty, C);
+            }
+        }
+
+
 
         a[A.posY][A.posX] = ' ';
         a[B.posY][B.posX] = ' ';
@@ -570,10 +630,10 @@ int main(int argc, char **argv)
     _setmode(_fileno(stdout), _O_U16TEXT);
 
     char test[EASY][EASY]{
-        {'H', ' ', 'X', ' '},
-        {' ', 'K', ' ', ' T'},
+        {' ', ' ', 'X', ' '},
+        {' ', ' ', 'K', 'T'},
         {' ', ' ', ' ', ' '},
-        {'F', 'K', ' ', 'K'}};
+        {' ', 'K', ' ', 'K'}};
 
     char **matrix = (char **)malloc(sizeof(char *) * EASY);
     for (int i = 0; i < EASY; i++)
@@ -598,7 +658,7 @@ int main(int argc, char **argv)
     Selected first = {1, 3};
     // Selected second = {0, 0};
     // Selected first = {0, 2};
-    Selected second = {2, 0};
+    Selected second = {2, 1};
 
     checkUShape(matrix, first, second, difficulty);
 
