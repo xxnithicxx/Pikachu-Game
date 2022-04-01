@@ -4,7 +4,7 @@
 #include <conio.h> // For keyboard input (getch())
 #include <windows.h>
 #include <string>
-
+#include <time.h>
 #include <io.h>    // Call _setmode
 #include <fcntl.h> // _O_U16TEXT
 
@@ -23,6 +23,7 @@ using namespace std;
 #define ARROW_NONE 0x00
 #define ESC_KEY 0x1B
 #define ENTER_KEY 0x0D
+#define SPACE_KEY 0x20
 
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 40
@@ -188,10 +189,33 @@ unsigned char GetArrow()
             return ARROW_NONE;
         }
     }
-    if (ch == ENTER_KEY || ch == ESC_KEY)
+    else
+    {
+        // When user use wasd keys
+        switch (ch)
+        {
+        case 'w':
+            return ARROW_UP;
+        case 'a':
+            return ARROW_LEFT;
+        case 'd':
+            return ARROW_RIGHT;
+        case 's':
+            return ARROW_DOWN;
+        }
+    }
+
+    // Enter key is the same as space key
+    if (ch == ENTER_KEY || ch == SPACE_KEY)
+    {
+        return ENTER_KEY;
+    }
+
+    if (ch == ESC_KEY)
     {
         return ch;
     }
+
     return ch;
 }
 
@@ -440,7 +464,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawCube(a, difficulty, A, GREEN, YELLOW);
         DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawHorizonLine(A, B);
-        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
         wprintf(L"This is I shape");
 
         Sleep(1000);
@@ -461,7 +485,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         DrawCube(a, difficulty, A, GREEN, YELLOW);
         DrawCube(a, difficulty, B, GREEN, YELLOW);
         DrawVerticalLine(A, B);
-        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
         wprintf(L"This is I shape");
 
         Sleep(1000);
@@ -523,8 +547,8 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
             DrawCube(a, difficulty, B, GREEN, YELLOW);
             DrawHorizonLine(B, C);
             DrawVerticalLine(A, C);
-            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
-            wprintf(L"L H 1 Shape");
+            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
+            wprintf(L"This is L Shape");
 
             Sleep(1000);
 
@@ -549,8 +573,8 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
             DrawCube(a, difficulty, B, GREEN, YELLOW);
             DrawVerticalLine(C, B);
             DrawHorizonLine(C, A);
-            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 4);
-            wprintf(L"L H 2 Shape");
+            GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
+            wprintf(L"This is L Shape");
 
             Sleep(1000);
 
@@ -654,6 +678,9 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
         wprintf(L"This is Z shape\n");
         Sleep(1000);
 
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
         for (SHORT i = A.posX; i <= temp1.posX; i++)
         {
             DeleteCude(a, difficulty, Selected{i, A.posY});
@@ -667,9 +694,6 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
         {
             DeleteCude(a, difficulty, Selected{temp1.posX, i});
         }
-
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
 
         return true;
     }
@@ -685,6 +709,9 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
         Sleep(1000);
 
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
         for (SHORT i = temp1.posX; i <= temp2.posX; i++)
         {
             DeleteCude(a, difficulty, Selected{i, temp1.posY});
@@ -699,10 +726,6 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
         {
             DeleteCude(a, difficulty, Selected{B.posX, i});
         }
-
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
-
         return true;
     }
 
@@ -839,6 +862,9 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         Sleep(1000);
 
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
+
         // Exception: if A.posY is higher than B.posY ("⬈" vector)
         if (A.posY > B.posY && A.posX < B.posX)
         {
@@ -877,12 +903,12 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         }
         else if (C.posX == difficulty)
         {
-            int posXDel = calculatePositionWidth(C.posX, difficulty) + 3;
-            int posYDel = calculatePositionHeight(C.posY, difficulty) + 1;
-            int sizeofLine = (D.posX - C.posX) * (WORD_WIDTH_SPACING + 1) + 2;
-            for (int i = 0; i < 2; i++)
+            int posXDel = calculatePositionWidth(difficulty, difficulty);
+            int posYDel = calculatePositionHeight(C.posY, difficulty) + 2;
+            int sizeofLine = (D.posY - C.posY) * (WORD_HEIGHT_SPACING + 1) + 2;
+            for (int i = 0; i < 5; i++)
             {
-                RestoreLine(posXDel, posYDel + i, sizeofLine, difficulty);
+                RestoreColumn(posXDel + i, posYDel, sizeofLine, difficulty);
             }
         }
         else
@@ -892,9 +918,6 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 DeleteCude(a, difficulty, C);
             }
         }
-
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
 
         return true;
     }
@@ -910,6 +933,9 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         wprintf(L"This is Z shape\n");
 
         Sleep(1000);
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
 
         SHORT minY = min(A.posY, C.posY);
         SHORT maxY = max(A.posY, C.posY);
@@ -957,10 +983,6 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
                 DeleteCude(a, difficulty, C);
             }
         }
-
-        a[A.posY][A.posX] = ' ';
-        a[B.posY][B.posX] = ' ';
-
         return true;
     }
     return false;
@@ -1043,8 +1065,8 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
         // Highlight the 2 node with red backgound_color
         DrawCube(matrix, difficulty, a, RED, YELLOW);
         DrawCube(matrix, difficulty, b, RED, YELLOW);
-        // wprintf(L"%c", 7);
-        Beep(440, 1000);
+        wprintf(L"%c", 7);
+        // Beep(440, 1000);
         Sleep(1000);
 
         // Delete the red background_color
@@ -1057,11 +1079,53 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
     return identical;
 }
 
+// No drawing graphic
+bool checkNodeIdenticalN(char **a, int difficulty, Selected A, Selected B)
+{
+    Selected C, D;
+    bool mode = 0;
+
+    A.prepareSelected(B);
+
+    if (checkLineH(a, A, B, difficulty))
+    {
+        return true;
+    }
+    else if (checkLineV(a, A, B, difficulty))
+    {
+        return true;
+    }
+    else if (checkHLShape(a, A, B, difficulty, C, mode))
+    {
+        return true;
+    }
+    else if (checkHRectangle(a, A, B, difficulty, C, D))
+    {
+        return true;
+    }
+    else if (checkVRectangle(a, A, B, difficulty, C, D))
+    {
+        return true;
+    }
+    else if (checkHorizontalU(a, A, B, difficulty, C, D))
+    {
+        return true;
+    }
+    else if (checkVerticalU(a, A, B, difficulty, C, D))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 // Check if the matrix can be solved
-bool checkSolve(char **a, int difficulty)
+bool checkSolve(char **&a, int difficulty)
 {
     // Find pair of identical elements in the matrix, run the checkNodeIdentical function to check if the pair can link with pattern, if true, delete the pair and start again
-    static char **temp = NULL;
+    char **temp = NULL;
     temp = (char **)malloc(sizeof(char *) * difficulty);
     for (int i = 0; i < difficulty; i++)
     {
@@ -1075,29 +1139,67 @@ bool checkSolve(char **a, int difficulty)
         }
     }
 
-    for (SHORT i = 0; i < difficulty; i++)
+Checked:
+    for (SHORT i = 0; i < difficulty; i++) // i is the y coordinate
     {
-        for (SHORT j = 0; j < difficulty; j++)
+        for (SHORT j = 0; j < difficulty; j++) // j is the x coordinate
         {
-            for (SHORT k = 0; k < difficulty; k++)
+            // If a[i][j] is space or ' ', continue
+            if (temp[i][j] == ' ')
             {
-                for (SHORT l = 0; l < difficulty; l++)
+                continue;
+            }
+
+            for (SHORT k = 0; k < difficulty; k++) // k is the y coordinate
+            {
+                for (SHORT l = 0; l < difficulty; l++) // l is the x coordinate
                 {
-                    if (a[i][j] != a[k][l])
+                    if (i == k && j == l)
                     {
                         continue;
                     }
 
+                    if (temp[i][j] != temp[k][l])
+                    {
+                        continue;
+                    }
+
+                    // If a[i][j] is the same as a[k][l], check if the pair can link with pattern
                     Selected A = {j, i};
                     Selected B = {l, k};
 
+                    if (checkNodeIdenticalN(temp, difficulty, A, B))
+                    {
+                        temp[i][j] = ' ';
+                        temp[k][l] = ' ';
 
+                        goto Checked;
+                    }
                 }
             }
         }
     }
 
-    return true;
+    if (isSolved(temp, difficulty))
+    {
+        // Free temp
+        for (int i = 0; i < difficulty; i++)
+        {
+            free(temp[i]);
+        }
+        free(temp);
+
+        return true;
+    }
+
+    // Free temp
+    for (int i = 0; i < difficulty; i++)
+    {
+        free(temp[i]);
+    }
+    free(temp);
+
+    return false;
 }
 
 void createMatrixPikachu(char **&a, int difficulty)
@@ -1111,13 +1213,22 @@ void createMatrixPikachu(char **&a, int difficulty)
     }
 
     // Create a array of pair interger pairs
+    // The array will only contain 25 distinct character pairs
     int sizeOfPair = difficulty * difficulty;
     char arrPair[sizeOfPair];
+    int count = 0;
     for (int i = 0; i < sizeOfPair; i++)
     {
-        arrPair[i] = i / 2 + 'A';
+        arrPair[i] = count / 2 + 'A';
+        count++;
+        if (count == 50)
+        {
+            count = 0;
+        }
     }
 
+// Shuffle the array of pairs
+Shuffle:
     for (int i = 0; i < difficulty; i++)
     {
         for (int j = 0; j < difficulty; j++)
@@ -1129,6 +1240,12 @@ void createMatrixPikachu(char **&a, int difficulty)
             swap(arrPair[posInPairArray], arrPair[sizeOfPair - 1]);
             sizeOfPair--;
         }
+    }
+
+    if (!checkSolve(a, difficulty))
+    {
+        sizeOfPair = difficulty * difficulty;
+        goto Shuffle;
     }
 }
 
@@ -1158,7 +1275,7 @@ void releaseMatrix(char **a, int difficulty)
 int main(int argc, char **argv)
 {
     char **matrix = NULL;
-    int difficulty = EASY;
+    int difficulty = MEDIUM;
 
     system("cls");
     SetWindowSize(difficulty);

@@ -1085,6 +1085,8 @@ bool checkNodeIdenticalN(char **a, int difficulty, Selected A, Selected B)
     Selected C, D;
     bool mode = 0;
 
+    A.prepareSelected(B);
+
     if (checkLineH(a, A, B, difficulty))
     {
         return true;
@@ -1120,7 +1122,7 @@ bool checkNodeIdenticalN(char **a, int difficulty, Selected A, Selected B)
 }
 
 // Check if the matrix can be solved
-bool checkSolve(char **a, int difficulty)
+bool checkSolve(char **&a, int difficulty)
 {
     // Find pair of identical elements in the matrix, run the checkNodeIdentical function to check if the pair can link with pattern, if true, delete the pair and start again
     static char **temp = NULL;
@@ -1137,26 +1139,35 @@ bool checkSolve(char **a, int difficulty)
         }
     }
 
-    for (SHORT i = 0; i < difficulty; i++)
+Checked:
+    for (SHORT i = 0; i < difficulty; i++) // i is the y coordinate
     {
-        for (SHORT j = 0; j < difficulty; j++)
+        for (SHORT j = 0; j < difficulty; j++) // j is the x coordinate
         {
             // If a[i][j] is space or ' ', continue
-            if (a[i][j] == ' ')
+            if (temp[i][j] == ' ')
             {
                 continue;
             }
 
-            for (SHORT k = i; k < difficulty; k++)
+            for (SHORT k = 0; k < difficulty; k++) // k is the y coordinate
             {
-                for (SHORT l = k; l < difficulty; l++)
+                for (SHORT l = 0; l < difficulty; l++) // l is the x coordinate
                 {
-                    if (a[i][j] != a[k][l])
+                    if (i == k && j == l)
                     {
                         continue;
                     }
 
-                    if (a[k][l] == ' ')
+                    if (temp[k][l] == ' ')
+                    {
+                        continue;
+                    }
+
+                    char test1 = temp[i][j];
+                    char test2 = temp[k][l];
+
+                    if (temp[i][j] != temp[k][l])
                     {
                         continue;
                     }
@@ -1165,21 +1176,21 @@ bool checkSolve(char **a, int difficulty)
                     Selected A = {j, i};
                     Selected B = {l, k};
 
-                    if (checkNodeIdenticalN(a, difficulty, A, B))
+                    if (checkNodeIdenticalN(temp, difficulty, A, B))
                     {
-                        a[i][j] = ' ';
-                        a[k][l] = ' ';
+                        temp[i][j] = ' ';
+                        temp[k][l] = ' ';
+
+                        drawMatrix(temp, difficulty);
 
                         goto Checked;
-
                     }
                 }
             }
-            Checked:;
         }
     }
 
-    if (isSolved(a, difficulty))
+    if (isSolved(temp, difficulty))
     {
         return true;
     }
@@ -1212,8 +1223,8 @@ void createMatrixPikachu(char **&a, int difficulty)
         }
     }
 
-    // Shuffle the array of pairs
-    Shuffle:
+// Shuffle the array of pairs
+Shuffle:
     for (int i = 0; i < difficulty; i++)
     {
         for (int j = 0; j < difficulty; j++)
@@ -1259,149 +1270,58 @@ void releaseMatrix(char **a, int difficulty)
 
 int main(int argc, char **argv)
 {
-    char **matrix = NULL;
-    int difficulty = HARD;
-
-    system("cls");
-    SetWindowSize(difficulty);
-    SetConsoleTitleW(L"Pikachu"); // Change console title (L is for Unicode)
-    DisableResizeWindow();
-    DisableMaximizeButton();
-    DisableCur();
-    HideScrollbar();
     _setmode(_fileno(stdout), _O_U16TEXT);
 
-    srand(time(NULL));
-    createMatrixPikachu(matrix, difficulty);
+    char test[EASY][EASY]{
+        {'X', ' ', 'X', ' '},
+        {'O', 'Z', 'T', 'S'},
+        {'T', ' ', 'T', ' '},
+        {'O', 'S', 'T', 'Z'}};
+    // {
+    //     {' ', ' ', ' ', ' '},
+    //     {' ', ' ', ' ', ' '},
+    //     {' ', ' ', ' ', ' '},
+    //     {' ', ' ', ' ', ' '}
+    // };
+
+    char **matrix = (char **)malloc(sizeof(char *) * EASY);
+    for (int i = 0; i < EASY; i++)
+    {
+        matrix[i] = (char *)malloc(sizeof(char) * EASY);
+    }
+    for (int i = 0; i < EASY; i++)
+    {
+        for (int j = 0; j < EASY; j++)
+        {
+            matrix[i][j] = test[i][j];
+        }
+    }
+
+    int difficulty = EASY;
+
+    // Random matrix of char in pair
     drawMatrix(matrix, difficulty);
     DrawBorder(difficulty);
 
-    // Clear keyboard buffer
-    fflush(stdin);
+    // Get the position of the word
+    Selected first = {0, 0};
+    // Selected second = {0, 0};
+    // Selected first = {0, 2};
+    Selected second = {3, 1};
 
-    // Initialize the position of selected Node
-    Selected firstNode = {-1, -1, false};
-    Selected secondNode = {-1, -1, false};
-    Selected tempNode = {0, 0, false};
-
-    SHORT posX = 0, posY = 0;
-    char ch = ENTER_KEY;
-
-    // Hightlight the (0, 0) position
-    DrawCube(matrix, difficulty, Selected{0, 0}, WHITE, BLACK);
-
-    // Run loop for playing game
-    while ((ch = GetArrow()) != ESC_KEY)
+    SetColor(BLACK, WHITE);
+    // Check if the board is solveable
+    if (checkSolve(matrix, difficulty))
     {
-        switch (ch)
-        {
-        case ARROW_UP:
-            if (posY - 1 < 0)
-            {
-                posY = difficulty;
-            }
-            posY--;
-            break;
-        case ARROW_DOWN:
-            if (posY + 1 >= difficulty)
-            {
-                posY = 0;
-                break;
-            }
-            posY++;
-            break;
-        case ARROW_LEFT:
-            if (posX - 1 < 0)
-            {
-                posX = difficulty;
-            }
-            posX--;
-            break;
-        case ARROW_RIGHT:
-            if (posX + 1 >= difficulty)
-            {
-                posX = 0;
-                break;
-            }
-            posX++;
-            break;
-        case ENTER_KEY:
-            if (matrix[posY][posX] == ' ')
-                break;
-            if (!firstNode.isSelected)
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
-                wprintf(L"First Node Selected\n");
-                firstNode.isSelected = true;
-                firstNode.posX = posX;
-                firstNode.posY = posY;
-            }
-            else if (!secondNode.isSelected)
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
-                wprintf(L"Second Node Selected\n");
-                secondNode.isSelected = true;
-                secondNode.posX = posX;
-                secondNode.posY = posY;
-            }
-            else
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
-                wprintf(L"You can't select more than 2 nodes\n");
-            }
-            break;
-        default:
-            break;
-        }
-
-        // Restore the previous Node to original state
-        DrawCube(matrix, difficulty, tempNode, BLACK, WHITE);
-
-        if (firstNode.isSelected)
-        {
-            DrawCube(matrix, difficulty, firstNode, AQUA, BLACK);
-        }
-
-        if (secondNode.isSelected)
-        {
-            DrawCube(matrix, difficulty, secondNode, AQUA, BLACK);
-            firstNode.prepareSelected(secondNode);
-
-            // Check if 2 nodes are selected is the same character
-            if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode))
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
-                wprintf(L"2 nodes are identical\n");
-            }
-            else
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
-                wprintf(L"2 nodes are different\n");
-            }
-
-            if (isSolved(matrix, difficulty))
-            {
-                GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
-                wprintf(L"You win\n");
-            }
-        }
-
-        if (moveToPosition(matrix, difficulty, posX, posY))
-        {
-            break;
-        }
-
-        tempNode.posX = posX;
-        tempNode.posY = posY;
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
+        wprintf(L"The board is solveable");
+    }
+    else
+    {
+        GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
+        wprintf(L"The board is not solveable");
     }
 
-    releaseMatrix(matrix, difficulty);
-
-    GoTo(0, calculatePositionHeight(difficulty, difficulty) + 2);
-    SetColor(BLACK, AQUA);
-    wprintf(L"Thanks for playing!\n");
-
-    system("pause");
-
+    getch();
     return 0;
 }

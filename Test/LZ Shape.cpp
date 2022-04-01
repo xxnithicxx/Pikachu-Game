@@ -321,16 +321,19 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             // Sleep(1000);
 
+            a[A.posY][A.posX] = ' ';
+            a[B.posY][B.posX] = ' ';
+
             for (B.posX; B.posX >= C.posX; B.posX--)
             {
-                DeleteCude(a, difficulty,B);
+                DeleteCude(a, difficulty, B);
             }
 
             C.prepareSelected(A);
 
-            for(C.posY; C.posY <= A.posY; C.posY++)
+            for (C.posY; C.posY <= A.posY; C.posY++)
             {
-                DeleteCude(a, difficulty,C);
+                DeleteCude(a, difficulty, C);
             }
         }
         else
@@ -342,16 +345,19 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             // Sleep(1000);
 
+            a[A.posY][A.posX] = ' ';
+            a[B.posY][B.posX] = ' ';
+
             for (A.posX; A.posX <= B.posX; A.posX++)
             {
-                DeleteCude(a, difficulty,A);
+                DeleteCude(a, difficulty, A);
             }
 
             C.prepareSelected(B);
 
-            for(C.posY; C.posY <= B.posY; C.posY++)
+            for (C.posY; C.posY <= B.posY; C.posY++)
             {
-                DeleteCude(a, difficulty,C);
+                DeleteCude(a, difficulty, C);
             }
         }
         return true;
@@ -430,10 +436,14 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
     {
         DrawVerticalLine(temp1, temp2);
         DrawHorizonLine(A, temp1);
-        DrawHorizonLine(temp2, B); 
+        DrawHorizonLine(temp2, B);
         GoTo(0, calculatePositionHeight(difficulty, difficulty) + 3);
         wprintf(L"This is Z shape\n");
+
         Sleep(1000);
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
 
         for (SHORT i = A.posX; i <= temp1.posX; i++)
         {
@@ -460,6 +470,9 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
         wprintf(L"This is Z shape\n");
 
         Sleep(1000);
+
+        a[A.posY][A.posX] = ' ';
+        a[B.posY][B.posX] = ' ';
 
         for (SHORT i = temp1.posX; i <= temp2.posX; i++)
         {
@@ -512,7 +525,7 @@ int main(int argc, char **argv)
         {'G', 'L', 'S', 'D'},
         {'O', ' ', 'K', 'F'},
         {'F', ' ', ' ', 'O'},
-        {'F', 'S', 'L', 'F'}};
+        {'F', 'O', 'L', 'F'}};
 
     char **matrix = (char **)malloc(sizeof(char *) * EASY);
     for (int i = 0; i < EASY; i++)
@@ -533,14 +546,20 @@ int main(int argc, char **argv)
     drawMatrix(matrix, difficulty);
 
     // Get the position of the word
-    Selected first = {1, 0};
+    Selected first = {0, 1};
     // Selected second = {0, 0};
     // Selected first = {0, 2};
-    Selected second = {2, 3};
+    Selected second = {3, 2};
     first.prepareSelected(second);
 
     // checkLShape(matrix, first, second, difficulty);
     checkRectangle(matrix, first, second, difficulty);
+
+    GoTo(WORD_WIDTH_SPACING, 0);
+    wprintf(L"Reprint matrix\n");
+    Sleep(1000);
+    // Reprint the matrix
+    drawMatrix(matrix, difficulty);
 
     getch();
     return 0;

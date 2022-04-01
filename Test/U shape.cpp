@@ -593,8 +593,6 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
             }
         }
 
-
-
         a[A.posY][A.posX] = ' ';
         a[B.posY][B.posX] = ' ';
 
@@ -630,10 +628,10 @@ int main(int argc, char **argv)
     _setmode(_fileno(stdout), _O_U16TEXT);
 
     char test[EASY][EASY]{
-        {' ', ' ', 'X', ' '},
-        {' ', ' ', 'K', 'T'},
+        {'X', ' ', 'X', ' '},
+        {' ', 'S', 'T', 'S'},
         {' ', ' ', ' ', ' '},
-        {' ', 'K', ' ', 'K'}};
+        {' ', ' ', ' ', 'S'}};
 
     char **matrix = (char **)malloc(sizeof(char *) * EASY);
     for (int i = 0; i < EASY; i++)
@@ -655,12 +653,18 @@ int main(int argc, char **argv)
     DrawBorder(difficulty);
 
     // Get the position of the word
-    Selected first = {1, 3};
+    Selected first = {0, 0};
     // Selected second = {0, 0};
     // Selected first = {0, 2};
-    Selected second = {2, 1};
+    Selected second = {3, 1};
 
     checkUShape(matrix, first, second, difficulty);
+
+    GoTo(WORD_WIDTH_SPACING, 0);
+    wprintf(L"Reprint matrix\n");
+    Sleep(1000);
+    // Reprint the matrix
+    drawMatrix(matrix, difficulty);
 
     getch();
     return 0;
