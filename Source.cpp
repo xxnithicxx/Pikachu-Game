@@ -4,6 +4,7 @@
 #include <conio.h> // For keyboard input (getch())
 #include <windows.h>
 #include <string>
+#include <math.h>
 #include <time.h>
 #include <io.h>    // Call _setmode
 #include <fcntl.h> // _O_U16TEXT
@@ -24,6 +25,7 @@ using namespace std;
 #define ESC_KEY 0x1B
 #define ENTER_KEY 0x0D
 #define SPACE_KEY 0x20
+#define HELP 0x68
 
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 40
@@ -94,11 +96,32 @@ struct Selected
     }
 };
 
+struct Score
+{
+    time_t startTime;
+    int error = 0;
+
+    void start()
+    {
+        startTime = time(NULL);
+    }
+
+    int total()
+    {
+        return (int)floor(time(NULL) - startTime) - error * 5;
+    }
+
+    void addError()
+    {
+        error++;
+    }
+} score;
+
 void SetWindowSize(int difficulty)
 {
     // SHORT is the type of variable in WINAPI
     SHORT width = difficulty * 11 + 40; // Width of console
-    SHORT height = difficulty * 5 + 10; // Height of console
+    SHORT height = difficulty * 5 + 3;  // Height of console
 
     HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -109,6 +132,15 @@ void SetWindowSize(int difficulty)
     WindowSize.Bottom = height;
 
     SetConsoleWindowInfo(hStdout, 1, &WindowSize);
+}
+
+void MoveWindow(int posx, int posy)
+{
+    RECT rectClient, rectWindow;
+    HWND hWnd = GetConsoleWindow();
+    GetClientRect(hWnd, &rectClient);
+    GetWindowRect(hWnd, &rectWindow);
+    MoveWindow(hWnd, posx, posy, rectClient.right - rectClient.left, rectClient.bottom - rectClient.top, TRUE);
 }
 
 // Disable resize window
@@ -202,6 +234,8 @@ unsigned char GetArrow()
             return ARROW_RIGHT;
         case 's':
             return ARROW_DOWN;
+        case 'h':
+            return HELP;
         }
     }
 
@@ -301,7 +335,7 @@ void RestoreColumn(int posX, int posY, unsigned int numberOfChars, int difficult
 }
 
 // Print the matrix with color
-void drawMatrix(char **a, int difficulty)
+void DrawMatrix(char **a, int difficulty)
 {
     for (int i = 0; i < difficulty; i++)
     {
@@ -858,7 +892,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         DrawHorizonLine(B, D);
         DrawVerticalLine(C, D);
         GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
-        wprintf(L"This is Z shape\n");
+        wprintf(L"This is U shape\n");
 
         Sleep(1000);
 
@@ -930,7 +964,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         DrawVerticalLine(B, D);
         DrawHorizonLine(C, D);
         GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 3);
-        wprintf(L"This is Z shape\n");
+        wprintf(L"This is U shape\n");
 
         Sleep(1000);
 
@@ -1066,8 +1100,8 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
         DrawCube(matrix, difficulty, a, RED, YELLOW);
         DrawCube(matrix, difficulty, b, RED, YELLOW);
         wprintf(L"%c", 7);
-        // Beep(440, 1000);
         Sleep(1000);
+        score.addError();
 
         // Delete the red background_color
         DrawCube(matrix, difficulty, a, BLACK, WHITE);
@@ -1121,7 +1155,7 @@ bool checkNodeIdenticalN(char **a, int difficulty, Selected A, Selected B)
     }
 }
 
-// Check if the matrix can be solved
+// Check if the matrix can be solve
 bool checkSolve(char **&a, int difficulty)
 {
     // Find pair of identical elements in the matrix, run the checkNodeIdentical function to check if the pair can link with pattern, if true, delete the pair and start again
@@ -1202,6 +1236,54 @@ Checked:
     return false;
 }
 
+void helpMove(char **&a, int difficulty)
+{
+    for (SHORT i = 0; i < difficulty; i++) // i is the y coordinate
+    {
+        for (SHORT j = 0; j < difficulty; j++) // j is the x coordinate
+        {
+            // If a[i][j] is space or ' ', continue
+            if (a[i][j] == ' ')
+            {
+                continue;
+            }
+
+            for (SHORT k = 0; k < difficulty; k++) // k is the y coordinate
+            {
+                for (SHORT l = 0; l < difficulty; l++) // l is the x coordinate
+                {
+                    if (i == k && j == l)
+                    {
+                        continue;
+                    }
+
+                    if (a[i][j] != a[k][l])
+                    {
+                        continue;
+                    }
+
+                    // If a[i][j] is the same as a[k][l], check if the pair can link with pattern
+                    Selected A = {j, i};
+                    Selected B = {l, k};
+
+                    if (checkNodeIdenticalN(a, difficulty, A, B))
+                    {
+                        DrawCube(a, difficulty, A, GRAY, YELLOW);
+                        DrawCube(a, difficulty, B, GRAY, YELLOW);
+                        Sleep(1000);
+
+                        DrawCube(a, difficulty, A, BLACK, WHITE);
+                        DrawCube(a, difficulty, B, BLACK, WHITE);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
 void createMatrixPikachu(char **&a, int difficulty)
 {
     // Create a square matrix for the given difficulty
@@ -1274,21 +1356,22 @@ void releaseMatrix(char **a, int difficulty)
 
 int main(int argc, char **argv)
 {
+    MoveWindow(0, 0);
     char **matrix = NULL;
-    int difficulty = MEDIUM;
+    int difficulty = HARD;
 
     system("cls");
     SetWindowSize(difficulty);
     SetConsoleTitleW(L"Pikachu"); // Change console title (L is for Unicode)
-    DisableResizeWindow();
-    DisableMaximizeButton();
-    DisableCur();
-    HideScrollbar();
+    // DisableResizeWindow();
+    // DisableMaximizeButton();
+    // DisableCur();
+    // HideScrollbar();
     _setmode(_fileno(stdout), _O_U16TEXT);
 
     srand(time(NULL));
     createMatrixPikachu(matrix, difficulty);
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
     DrawBorder(difficulty);
 
     // Clear keyboard buffer
@@ -1304,6 +1387,8 @@ int main(int argc, char **argv)
 
     // Hightlight the (0, 0) position
     DrawCube(matrix, difficulty, Selected{0, 0}, WHITE, BLACK);
+
+    score.startTime;
 
     // Run loop for playing game
     while ((ch = GetArrow()) != ESC_KEY)
@@ -1340,6 +1425,9 @@ int main(int argc, char **argv)
             }
             posX++;
             break;
+        case HELP:
+            helpMove(matrix, difficulty);
+            break;
         case ENTER_KEY:
             if (matrix[posY][posX] == ' ')
                 break;
@@ -1353,6 +1441,12 @@ int main(int argc, char **argv)
             }
             else if (!secondNode.isSelected)
             {
+                if (firstNode.posX == posX && firstNode.posY == posY)
+                {
+                    GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
+                    wprintf(L"You can't select the same node twice\n");
+                    continue;
+                }
                 GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 1);
                 wprintf(L"Second Node Selected\n");
                 secondNode.isSelected = true;

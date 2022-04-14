@@ -301,7 +301,7 @@ void RestoreColumn(int posX, int posY, unsigned int numberOfChars, int difficult
 }
 
 // Print the matrix with color
-void drawMatrix(char **a, int difficulty)
+void DrawMatrix(char **a, int difficulty)
 {
     for (int i = 0; i < difficulty; i++)
     {
@@ -1181,7 +1181,7 @@ Checked:
                         temp[i][j] = ' ';
                         temp[k][l] = ' ';
 
-                        drawMatrix(temp, difficulty);
+                        DrawMatrix(temp, difficulty);
 
                         goto Checked;
                     }
@@ -1300,7 +1300,7 @@ int main(int argc, char **argv)
     int difficulty = EASY;
 
     // Random matrix of char in pair
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
     DrawBorder(difficulty);
 
     // Get the position of the word

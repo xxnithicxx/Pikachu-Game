@@ -601,7 +601,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
     return false;
 }
 
-void drawMatrix(char **a, int difficulty)
+void DrawMatrix(char **a, int difficulty)
 {
     for (int i = 0; i < difficulty; i++)
     {
@@ -649,7 +649,7 @@ int main(int argc, char **argv)
     int difficulty = EASY;
 
     // Random matrix of char in pair
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
     DrawBorder(difficulty);
 
     // Get the position of the word
@@ -664,7 +664,7 @@ int main(int argc, char **argv)
     wprintf(L"Reprint matrix\n");
     Sleep(1000);
     // Reprint the matrix
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
 
     getch();
     return 0;

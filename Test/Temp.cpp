@@ -301,7 +301,7 @@ void RestoreColumn(int posX, int posY, unsigned int numberOfChars, int difficult
 }
 
 // Print the matrix with color
-void drawMatrix(char **a, int difficulty)
+void DrawMatrix(char **a, int difficulty)
 {
     for (int i = 0; i < difficulty; i++)
     {
@@ -1273,7 +1273,7 @@ int main(int argc, char **argv)
 
     srand(time(NULL));
     createMatrixPikachu(matrix, difficulty);
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
     DrawBorder(difficulty);
 
     // Clear keyboard buffer

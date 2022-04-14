@@ -310,7 +310,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
     return false;
 }
 
-void drawMatrix(char **a, int difficulty)
+void DrawMatrix(char **a, int difficulty)
 {
     for (int i = 0; i < difficulty; i++)
     {
@@ -358,7 +358,7 @@ int main(int argc, char **argv)
     int difficulty = EASY;
 
     // Random matrix of char in pair
-    drawMatrix(matrix, difficulty);
+    DrawMatrix(matrix, difficulty);
 
     // Get the position of the word
     Selected first = {1, 0};
