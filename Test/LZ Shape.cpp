@@ -128,7 +128,7 @@ void DrawCube(char **a, int difficulty, Selected A, int backgound_color, int tex
     SetColor(BLACK, WHITE);
 }
 
-void DeleteCude(char **a, int difficulty, Selected A)
+void DeleteCube(char **a, int difficulty, Selected A)
 {
     SetColor(BLACK, BLACK);
     int posY = calculatePositionHeight(A.posY, difficulty);
@@ -326,14 +326,14 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             for (B.posX; B.posX >= C.posX; B.posX--)
             {
-                DeleteCude(a, difficulty, B);
+                DeleteCube(a, difficulty, B);
             }
 
             C.prepareSelected(A);
 
             for (C.posY; C.posY <= A.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                DeleteCube(a, difficulty, C);
             }
         }
         else
@@ -350,14 +350,14 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             for (A.posX; A.posX <= B.posX; A.posX++)
             {
-                DeleteCude(a, difficulty, A);
+                DeleteCube(a, difficulty, A);
             }
 
             C.prepareSelected(B);
 
             for (C.posY; C.posY <= B.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                DeleteCube(a, difficulty, C);
             }
         }
         return true;
@@ -447,16 +447,16 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = A.posX; i <= temp1.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, A.posY});
+            DeleteCube(a, difficulty, Selected{i, A.posY});
         }
         for (SHORT i = temp2.posX; i <= B.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, B.posY});
+            DeleteCube(a, difficulty, Selected{i, B.posY});
         }
         temp1.prepareSelected(temp2);
         for (SHORT i = temp1.posY; i <= temp2.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{temp1.posX, i});
+            DeleteCube(a, difficulty, Selected{temp1.posX, i});
         }
 
         return true;
@@ -476,17 +476,17 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = temp1.posX; i <= temp2.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, temp1.posY});
+            DeleteCube(a, difficulty, Selected{i, temp1.posY});
         }
         A.prepareSelected(temp1);
         for (SHORT i = A.posY; i <= temp1.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{A.posX, i});
+            DeleteCube(a, difficulty, Selected{A.posX, i});
         }
         B.prepareSelected(temp2);
         for (SHORT i = B.posY; i <= temp2.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{B.posX, i});
+            DeleteCube(a, difficulty, Selected{B.posX, i});
         }
 
         return true;

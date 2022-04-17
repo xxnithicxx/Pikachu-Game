@@ -32,14 +32,6 @@ struct Selected
     bool isSelected;
 };
 
-struct BackGround
-{
-    string **BG;
-
-    void GetBG(int difficulty);
-    void PrintBG(char **a, int difficulty, Selected A);
-};
-
 // Calculate position of the word in the console
 int calculatePositionWidth(int posInMatrix, int difficulty)
 {
@@ -51,7 +43,15 @@ int calculatePositionHeight(int posInMatrix, int difficulty)
     return (WORD_HEIGHT_SPACING + 1) * posInMatrix + 4; // +4 is for the border
 }
 
-void BackGround::GetBG(int difficulty)
+struct BackGround
+{
+    string **BG;
+
+    void GetBG(int difficulty);
+    void PrintBG(int difficulty, Selected A);
+};
+
+/* void BackGround::GetBG(int difficulty)
 {
     int sizeBG = difficulty * difficulty;
     BG = new string *[sizeBG];
@@ -97,6 +97,62 @@ void BackGround::PrintBG(char **a, int difficulty, Selected A)
         GoTo(posX, posY++);
         cout << BG[position][i];
     }
+} */
+
+void BackGround::GetBG(int difficulty)
+{
+    int sizeBG = difficulty * difficulty;
+    BG = new string *[sizeBG];
+    for (int i = 0; i < sizeBG; i++)
+    {
+        BG[i] = new string[4];
+    }
+
+    ifstream file;
+    // Open 2.txt in Background folder
+    file.open("./BackGround/1.txt");
+    if (file.is_open())
+    {
+        string temp;
+        for (int i = 0; i < difficulty; i++) // Number of row in matrix pikachu
+        {
+            for (int j = 0; j < 4; j++) // 4 is the width of the cube with not overlap the next cube
+            {
+                getline(file, temp);
+                for (int k = 0; k < difficulty; k++) // Number of column in matrix pikachu
+                {
+                    // Cut the string for 9 characters
+                    BG[i + k * difficulty][j] += temp.substr(k * difficulty, k * difficulty + 9);
+                }
+            }
+        }
+    }
+    else
+    {
+        cout << "Unable to open file" << endl;
+    }
+
+    file.close();
+}
+
+void BackGround::PrintBG(int difficulty, Selected A)
+{
+    if (A.posX < 0 || A.posY < 0 || A.posX >= difficulty || A.posY >= difficulty)
+        return;
+    // SetColor(BLACK, WHITE);
+    int position = A.posY + A.posX * difficulty;
+    int posY = calculatePositionHeight(A.posY, difficulty);
+    int posX = calculatePositionWidth(A.posX, difficulty);
+    for (int i = 0; i < 4; i++)
+    {
+        GoTo(posX, posY++);
+        wcout << BG[position][i].c_str();
+    }
+    if (A.posY == difficulty - 1)
+    {
+        GoTo(posX, posY++);
+        wprintf(L"         ");
+    }
 }
 
 int main(int argc, char **argv)
@@ -110,7 +166,7 @@ int main(int argc, char **argv)
     {
         for (SHORT j = 0; j < HARD; j++)
         {
-            backGround.PrintBG(a, HARD, {i, j});
+            backGround.PrintBG(HARD, {i, j});
         }
     }
 

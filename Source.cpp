@@ -4,8 +4,10 @@
 #include <conio.h> // For keyboard input (getch())
 #include <windows.h>
 #include <string>
+#include <string.h>
 #include <math.h>
 #include <time.h>
+#include <fstream>
 #include <io.h>    // Call _setmode
 #include <fcntl.h> // _O_U16TEXT
 
@@ -116,6 +118,14 @@ struct Score
         error++;
     }
 } score;
+
+struct BackGround
+{
+    string **BG;
+
+    void GetBG(int difficulty);
+    void PrintBG(int difficulty, Selected A);
+};
 
 void SetWindowSize(int difficulty)
 {
@@ -372,7 +382,7 @@ void DrawCube(char **a, int difficulty, Selected A, int backgound_color, int tex
     SetColor(BLACK, WHITE);
 }
 
-void DeleteCude(char **a, int difficulty, Selected A)
+void DeleteCube(char **a, int difficulty, Selected A)
 {
     SetColor(BLACK, BLACK);
     int posY = calculatePositionHeight(A.posY, difficulty);
@@ -394,6 +404,66 @@ void DeleteCude(char **a, int difficulty, Selected A)
     if (A.posY == difficulty - 1)
         wprintf(L"        \n");
     SetColor(BLACK, WHITE);
+}
+
+void BackGround::GetBG(int difficulty)
+{
+    int sizeBG = difficulty * difficulty;
+    BG = new string *[sizeBG];
+    for (int i = 0; i < sizeBG; i++)
+    {
+        BG[i] = new string[4];
+    }
+
+    ifstream file;
+    // Open 2.txt in Background folder
+    file.open("./BackGround/1.txt");
+    if (file.is_open())
+    {
+        string temp;
+        for (int i = 0; i < difficulty; i++) // Number of row in matrix pikachu
+        {
+            for (int j = 0; j < 4; j++) // 4 is the width of the cube with not overlap the next cube
+            {
+                getline(file, temp);
+                for (int k = 0; k < difficulty; k++) // Number of column in matrix pikachu
+                {
+                    // Cut the string for 9 characters
+                    string content = temp.substr(k * WORD_WIDTH_SPACING, 9);
+                    BG[i + k * difficulty][j] = content;
+                }
+            }
+        }
+    }
+    else
+    {
+        cout << "Unable to open file" << endl;
+    }
+
+    file.close();
+}
+
+void BackGround::PrintBG(int difficulty, Selected A)
+{
+    if (A.posX < 0 || A.posY < 0 || A.posX >= difficulty || A.posY >= difficulty)
+        return;
+
+    SetColor(BLACK, WHITE);
+    int position = A.posY + A.posX * difficulty;
+    int posY = calculatePositionHeight(A.posY, difficulty);
+    int posX = calculatePositionWidth(A.posX, difficulty);
+
+    for (int i = 0; i < 4; i++)
+    {
+        GoTo(posX, posY++);
+        wprintf(L"%s", BG[position][i].c_str());
+        // wcout << BG[position][i].size();
+    }
+    if (A.posY == difficulty - 1)
+    {
+        GoTo(posX, posY++);
+        wprintf(L"         ");
+    }
 }
 
 void DrawHorizonLine(Selected A, Selected B)
@@ -490,7 +560,7 @@ bool checkLineH(char **a, Selected A, Selected B, int difficulty)
     return true;
 }
 
-bool checkLine(char **&a, Selected A, Selected B, int difficulty)
+bool checkLine(char **&a, Selected A, Selected B, int difficulty, BackGround backGround)
 {
 
     if (checkLineH(a, A, B, difficulty))
@@ -508,7 +578,8 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
 
         for (int i = A.posX; i <= B.posX + 1; i++)
         {
-            DeleteCude(a, difficulty, A);
+            // DeleteCube(a, difficulty, A);
+            backGround.PrintBG(difficulty, A);
             A.posX = i;
         }
         return true;
@@ -529,7 +600,8 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
 
         for (int i = A.posY; i <= B.posY + 1; i++)
         {
-            DeleteCude(a, difficulty, A);
+            // DeleteCube(a, difficulty, A);
+            backGround.PrintBG(difficulty, A);
             A.posY = i;
         }
         return true;
@@ -566,7 +638,7 @@ bool checkHLShape(char **a, Selected A, Selected B, int difficulty, Selected &C,
     return false;
 }
 
-bool checkLShape(char **a, Selected A, Selected B, int difficulty)
+bool checkLShape(char **a, Selected A, Selected B, int difficulty, BackGround backGround)
 {
     Selected C;
     bool mode;
@@ -591,14 +663,16 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             for (B.posX; B.posX >= C.posX; B.posX--)
             {
-                DeleteCude(a, difficulty, B);
+                // DeleteCube(a, difficulty, B);
+                backGround.PrintBG(difficulty, B);
             }
 
             C.prepareSelected(A);
 
             for (C.posY; C.posY <= A.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                // DeleteCube(a, difficulty, C);
+                backGround.PrintBG(difficulty, C);
             }
         }
         else
@@ -617,14 +691,17 @@ bool checkLShape(char **a, Selected A, Selected B, int difficulty)
 
             for (A.posX; A.posX <= B.posX; A.posX++)
             {
-                DeleteCude(a, difficulty, A);
+                // DeleteCube(a, difficulty, A);
+                backGround.PrintBG(difficulty, A);
+
             }
 
             C.prepareSelected(B);
 
             for (C.posY; C.posY <= B.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                // DeleteCube(a, difficulty, C);
+                backGround.PrintBG(difficulty, C);
             }
         }
         return true;
@@ -695,7 +772,7 @@ bool checkVRectangle(char **a, Selected A, Selected B, int difficulty, Selected 
     return false;
 }
 
-bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
+bool checkRectangle(char **a, Selected A, Selected B, int difficulty, BackGround backGround)
 {
     Selected temp1, temp2;
 
@@ -717,16 +794,19 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = A.posX; i <= temp1.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, A.posY});
+            // DeleteCube(a, difficulty, Selected{i, A.posY});
+            backGround.PrintBG(difficulty, Selected{i, A.posY});
         }
         for (SHORT i = temp2.posX; i <= B.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, B.posY});
+            // DeleteCube(a, difficulty, Selected{i, B.posY});
+            backGround.PrintBG(difficulty, Selected{i, B.posY});
         }
         temp1.prepareSelected(temp2);
         for (SHORT i = temp1.posY; i <= temp2.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{temp1.posX, i});
+            // DeleteCube(a, difficulty, Selected{temp1.posX, i});
+            backGround.PrintBG(difficulty, Selected{temp1.posX, i});
         }
 
         return true;
@@ -748,17 +828,20 @@ bool checkRectangle(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = temp1.posX; i <= temp2.posX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, temp1.posY});
+            // DeleteCube(a, difficulty, Selected{i, temp1.posY});
+            backGround.PrintBG(difficulty, Selected{i, temp1.posY});
         }
         A.prepareSelected(temp1);
         for (SHORT i = A.posY; i <= temp1.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{A.posX, i});
+            // DeleteCube(a, difficulty, Selected{A.posX, i});
+            backGround.PrintBG(difficulty, Selected{A.posX, i});
         }
         B.prepareSelected(temp2);
         for (SHORT i = B.posY; i <= temp2.posY; i++)
         {
-            DeleteCude(a, difficulty, Selected{B.posX, i});
+            // DeleteCube(a, difficulty, Selected{B.posX, i});
+            backGround.PrintBG(difficulty, Selected{B.posX, i});
         }
         return true;
     }
@@ -877,7 +960,7 @@ bool checkVerticalU(char **a, Selected A, Selected B, int difficulty, Selected &
     return false;
 }
 
-bool checkUShape(char **a, Selected A, Selected B, int difficulty)
+bool checkUShape(char **a, Selected A, Selected B, int difficulty, BackGround backGround)
 {
     Selected C;
     Selected D;
@@ -910,7 +993,8 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minX + 1; i < maxX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, A.posY});
+            // DeleteCube(a, difficulty, Selected{i, A.posY});
+            backGround.PrintBG(difficulty, Selected{i, A.posY});
         }
 
         minX = min(B.posX, D.posX);
@@ -918,11 +1002,14 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minX + 1; i < maxX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, B.posY});
+            // DeleteCube(a, difficulty, Selected{i, B.posY});
+            backGround.PrintBG(difficulty, Selected{i, B.posY});
         }
 
-        DeleteCude(a, difficulty, A);
-        DeleteCude(a, difficulty, B);
+        // DeleteCube(a, difficulty, A);
+        // DeleteCube(a, difficulty, B);
+        backGround.PrintBG(difficulty, A);
+        backGround.PrintBG(difficulty, B);
 
         if (C.posX == -1)
         {
@@ -949,7 +1036,8 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         {
             for (C.posY; C.posY <= D.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                // DeleteCube(a, difficulty, C);
+                backGround.PrintBG(difficulty, C);
             }
         }
 
@@ -976,7 +1064,8 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minY + 1; i < maxY; i++)
         {
-            DeleteCude(a, difficulty, Selected{A.posX, i});
+            // DeleteCube(a, difficulty, Selected{A.posX, i});
+            backGround.PrintBG(difficulty, Selected{A.posX, i});
         }
 
         minY = min(B.posY, D.posY);
@@ -984,11 +1073,14 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minY + 1; i < maxY; i++)
         {
-            DeleteCude(a, difficulty, Selected{B.posX, i});
+            // DeleteCube(a, difficulty, Selected{B.posX, i});
+            backGround.PrintBG(difficulty, Selected{B.posX, i});
         }
 
-        DeleteCude(a, difficulty, A);
-        DeleteCude(a, difficulty, B);
+        // DeleteCube(a, difficulty, A);
+        // DeleteCube(a, difficulty, B);
+        backGround.PrintBG(difficulty, A);
+        backGround.PrintBG(difficulty, B);
 
         if (C.posY == -1)
         {
@@ -1014,7 +1106,8 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         {
             for (C.posX; C.posX <= D.posX; C.posX++)
             {
-                DeleteCude(a, difficulty, C);
+                // DeleteCube(a, difficulty, C);
+                backGround.PrintBG(difficulty, C);
             }
         }
         return true;
@@ -1023,11 +1116,6 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 }
 
 // Menu for the difficulty
-char menuDifficulty()
-{
-    wprintf(L"Difficulty: \n");
-    return getch();
-}
 
 // Menu for the game
 
@@ -1048,7 +1136,7 @@ bool isSolved(char **a, int difficulty)
 }
 
 // Check if 2 node selected is the same as the pair
-bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b)
+bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b, BackGround backGround)
 {
     bool identical = false;
 
@@ -1057,34 +1145,36 @@ bool checkNodeIdentical(char **&matrix, int difficulty, Selected &a, Selected &b
     // Check if 2 node can link with together with pattern
     if (identical)
     {
-        if (checkLine(matrix, a, b, difficulty))
+        if (checkLine(matrix, a, b, difficulty, backGround))
         {
             a.isSelected = false;
             b.isSelected = false;
             return true;
         }
-        else if (checkLShape(matrix, a, b, difficulty))
+        else if (checkLShape(matrix, a, b, difficulty, backGround))
         {
             a.isSelected = false;
             b.isSelected = false;
             return true;
         }
-        else if (checkRectangle(matrix, a, b, difficulty))
+        else if (checkRectangle(matrix, a, b, difficulty, backGround))
         {
             a.isSelected = false;
             b.isSelected = false;
             return true;
         }
-        else if (checkUShape(matrix, a, b, difficulty))
+        else if (checkUShape(matrix, a, b, difficulty, backGround))
         {
             a.isSelected = false;
             b.isSelected = false;
             return true;
         }
+
         DrawCube(matrix, difficulty, a, RED, YELLOW);
         DrawCube(matrix, difficulty, b, RED, YELLOW);
-        Beep(440, 1000);
+        wprintf(L"%c", 7);
         Sleep(1000);
+        score.addError();
 
         DrawCube(matrix, difficulty, a, BLACK, WHITE);
         DrawCube(matrix, difficulty, b, BLACK, WHITE);
@@ -1352,6 +1442,103 @@ void releaseMatrix(char **a, int difficulty)
     free(a);
 }
 
+Selected coordinateValid(char **a, int difficulty, char move, Selected cod)
+{
+    switch (move)
+    {
+    case 'w':
+        for (SHORT i = cod.posY - 1; i >= 0; i--)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[i][j] != ' ')
+                {
+                    return Selected{j, i};
+                }
+            }
+        }
+
+        for (SHORT i = difficulty - 1; i > cod.posY; i--)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[i][j] != ' ')
+                {
+                    return Selected{j, i};
+                }
+            }
+        }
+    case 's':
+        for (SHORT i = cod.posY + 1; i < difficulty; i++)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[i][j] != ' ')
+                {
+                    return Selected{j, i};
+                }
+            }
+        }
+
+        for (SHORT i = 0; i <= cod.posY; i++)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[i][j] != ' ')
+                {
+                    return Selected{j, i};
+                }
+            }
+        }
+    case 'a':
+        for (SHORT i = cod.posX - 1; i >= 0; i--)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[j][i] != ' ')
+                {
+                    return Selected{i, j};
+                }
+            }
+        }
+
+        for (SHORT i = difficulty - 1; i > cod.posX; i--)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[j][i] != ' ')
+                {
+                    return Selected{i, j};
+                }
+            }
+        }
+    case 'd':
+        for (SHORT i = cod.posX + 1; i < difficulty; i++)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[j][i] != ' ')
+                {
+                    return Selected{i, j};
+                }
+            }
+        }
+
+        for (SHORT i = 0; i < cod.posX; i++)
+        {
+            for (SHORT j = 0; j < difficulty; j++)
+            {
+                if (a[j][i] != ' ')
+                {
+                    return Selected{i, j};
+                }
+            }
+        }
+    }
+
+    return Selected{-1, -1};
+}
+
 SHORT coordinateH(char **a, int difficulty, bool up, Selected cod)
 {
     if (up == true)
@@ -1373,7 +1560,7 @@ SHORT coordinateH(char **a, int difficulty, bool up, Selected cod)
             }
         }
 
-        return cod.posY;
+        return -1;
     }
 
     for (SHORT i = cod.posY + 1; i < difficulty; i++)
@@ -1392,7 +1579,7 @@ SHORT coordinateH(char **a, int difficulty, bool up, Selected cod)
         }
     }
 
-    return cod.posY;
+    return -1;
 }
 
 SHORT coordinateV(char **a, int difficulty, bool left, Selected cod)
@@ -1415,7 +1602,7 @@ SHORT coordinateV(char **a, int difficulty, bool left, Selected cod)
             }
         }
 
-        return cod.posX;
+        return -1;
     }
 
     for (SHORT i = cod.posX + 1; i < difficulty; i++)
@@ -1426,7 +1613,7 @@ SHORT coordinateV(char **a, int difficulty, bool left, Selected cod)
         }
     }
 
-    for (SHORT i = 0; i < cod.posX; i--)
+    for (SHORT i = 0; i < cod.posX; i++)
     {
         if (a[cod.posY][i] != ' ')
         {
@@ -1434,14 +1621,75 @@ SHORT coordinateV(char **a, int difficulty, bool left, Selected cod)
         }
     }
 
-    return cod.posX;
+    return -1;
+}
+
+Selected checkLocalElements(char **a, int difficulty, Selected A)
+{
+    SHORT posX = A.posX;
+    SHORT posY = A.posY;
+
+    if (posX - 1 >= 0 && a[posY][posX - 1] != ' ')
+    {
+        return Selected{(SHORT)(posX - 1), posY};
+    }
+
+    if (posX + 1 < difficulty && a[posY][posX + 1] != ' ')
+    {
+        return Selected{(SHORT)(posX + 1), posY};
+    }
+
+    if (posY - 1 >= 0 && a[posY - 1][posX] != ' ')
+    {
+        return Selected{posX, (SHORT)(posY - 1)};
+    }
+
+    if (posY + 1 < difficulty && a[posY + 1][posX] != ' ')
+    {
+        return Selected{posX, (SHORT)(posY + 1)};
+    }
+
+    if (posX - 1 >= difficulty && posY - 1 >= difficulty && a[posY - 1][posX - 1] != ' ')
+    {
+        return Selected{(SHORT)(posX - 1), (SHORT)(posY - 1)};
+    }
+
+    if (posX + 1 < difficulty && posY + 1 < difficulty && a[posY + 1][posX + 1] != ' ')
+    {
+        return Selected{(SHORT)(posX + 1), (SHORT)(posY + 1)};
+    }
+
+    if (posX - 1 >= 0 && posY + 1 < difficulty && a[posY + 1][posX - 1] != ' ')
+    {
+        return Selected{(SHORT)(posX - 1), (SHORT)(posY + 1)};
+    }
+
+    if (posX + 1 < difficulty && posY - 1 >= 0 && a[posY - 1][posX + 1] != ' ')
+    {
+        return Selected{(SHORT)(posX + 1), (SHORT)(posY - 1)};
+    }
+
+    Selected newCor = coordinateValid(a, difficulty, 'w', A);
+    if (memcmp(&newCor, &A, sizeof(Selected)) != 0)
+        return newCor;
+    newCor = coordinateValid(a, difficulty, 's', A);
+    if (memcmp(&newCor, &A, sizeof(Selected)) != 0)
+        return newCor;
+    newCor = coordinateValid(a, difficulty, 'a', A);
+    if (memcmp(&newCor, &A, sizeof(Selected)) != 0)
+        return newCor;
+    newCor = coordinateValid(a, difficulty, 'd', A);
+    if (memcmp(&newCor, &A, sizeof(Selected)) != 0)
+        return newCor;
+
+    return Selected{-1, -1};
 }
 
 int main(int argc, char **argv)
 {
     MoveWindow(0, 0);
     char **matrix = NULL;
-    int difficulty = EASY;
+    int difficulty = HARD;
 
     system("cls");
     SetWindowSize(difficulty);
@@ -1467,10 +1715,12 @@ int main(int argc, char **argv)
 
     SHORT posX = 0, posY = 0;
     char ch = ENTER_KEY;
+    BackGround backGround;
 
     // Hightlight the (0, 0) position
     DrawCube(matrix, difficulty, Selected{0, 0}, WHITE, BLACK);
 
+    backGround.GetBG(difficulty);
     score.startTime;
 
     // Run loop for playing game
@@ -1480,18 +1730,39 @@ int main(int argc, char **argv)
         {
         case ARROW_UP:
             posY = coordinateH(matrix, difficulty, true, Selected{posX, posY});
+            if (posY == -1)
+            {
+                Selected newCor = coordinateValid(matrix, difficulty, 'w', Selected{posX, posY});
+                posX = newCor.posX;
+                posY = newCor.posY;
+            }
             break;
         case ARROW_DOWN:
-
             posY = coordinateH(matrix, difficulty, false, Selected{posX, posY});
+            if (posY == -1)
+            {
+                Selected newCor = coordinateValid(matrix, difficulty, 's', Selected{posX, posY});
+                posX = newCor.posX;
+                posY = newCor.posY;
+            }
             break;
         case ARROW_LEFT:
-
             posX = coordinateV(matrix, difficulty, true, Selected{posX, posY});
+            if (posX == -1)
+            {
+                Selected newCor = coordinateValid(matrix, difficulty, 'a', Selected{posX, posY});
+                posX = newCor.posX;
+                posY = newCor.posY;
+            }
             break;
         case ARROW_RIGHT:
-
             posX = coordinateV(matrix, difficulty, false, Selected{posX, posY});
+            if (posX == -1)
+            {
+                Selected newCor = coordinateValid(matrix, difficulty, 'd', Selected{posX, posY});
+                posX = newCor.posX;
+                posY = newCor.posY;
+            }
             break;
         case HELP:
             helpMove(matrix, difficulty);
@@ -1545,10 +1816,17 @@ int main(int argc, char **argv)
             firstNode.prepareSelected(secondNode);
 
             // Check if 2 nodes are selected is the same character
-            if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode))
+            if (checkNodeIdentical(matrix, difficulty, firstNode, secondNode, backGround))
             {
                 GoTo(WORD_WIDTH_SPACING, calculatePositionHeight(difficulty, difficulty) + 2);
                 wprintf(L"2 nodes are identical\n");
+                // Draw background at the posX and posY coordinates
+
+                // Check local elements of the matrix if it different from ' '
+                Selected newCor = checkLocalElements(matrix, difficulty, secondNode);
+
+                posX = newCor.posX;
+                posY = newCor.posY;
             }
             else
             {

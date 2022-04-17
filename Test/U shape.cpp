@@ -198,7 +198,7 @@ void DrawCube(char **a, int difficulty, Selected A, int backgound_color, int tex
     SetColor(BLACK, WHITE);
 }
 
-void DeleteCude(char **a, int difficulty, Selected A)
+void DeleteCube(char **a, int difficulty, Selected A)
 {
     SetColor(BLACK, BLACK);
     int posY = calculatePositionHeight(A.posY, difficulty);
@@ -487,7 +487,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minX + 1; i < maxX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, A.posY});
+            DeleteCube(a, difficulty, Selected{i, A.posY});
         }
 
         minX = min(B.posX, D.posX);
@@ -495,11 +495,11 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minX + 1; i < maxX; i++)
         {
-            DeleteCude(a, difficulty, Selected{i, B.posY});
+            DeleteCube(a, difficulty, Selected{i, B.posY});
         }
 
-        DeleteCude(a, difficulty, A);
-        DeleteCude(a, difficulty, B);
+        DeleteCube(a, difficulty, A);
+        DeleteCube(a, difficulty, B);
 
         if (C.posX == -1)
         {
@@ -526,7 +526,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         {
             for (C.posY; C.posY <= D.posY; C.posY++)
             {
-                DeleteCude(a, difficulty, C);
+                DeleteCube(a, difficulty, C);
             }
         }
 
@@ -551,7 +551,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minY + 1; i < maxY; i++)
         {
-            DeleteCude(a, difficulty, Selected{A.posX, i});
+            DeleteCube(a, difficulty, Selected{A.posX, i});
         }
 
         minY = min(B.posY, D.posY);
@@ -559,11 +559,11 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
 
         for (SHORT i = minY + 1; i < maxY; i++)
         {
-            DeleteCude(a, difficulty, Selected{B.posX, i});
+            DeleteCube(a, difficulty, Selected{B.posX, i});
         }
 
-        DeleteCude(a, difficulty, A);
-        DeleteCude(a, difficulty, B);
+        DeleteCube(a, difficulty, A);
+        DeleteCube(a, difficulty, B);
 
         if (C.posY == -1)
         {
@@ -589,7 +589,7 @@ bool checkUShape(char **a, Selected A, Selected B, int difficulty)
         {
             for (C.posX; C.posX <= D.posX; C.posX++)
             {
-                DeleteCude(a, difficulty, C);
+                DeleteCube(a, difficulty, C);
             }
         }
 

@@ -116,7 +116,7 @@ void DrawCube(char **a, int difficulty, Selected A, int backgound_color, int tex
     SetColor(BLACK, WHITE);
 }
 
-void DeleteCude(char **a, int difficulty, Selected A)
+void DeleteCube(char **a, int difficulty, Selected A)
 {
     SetColor(BLACK, BLACK);
     int posY = calculatePositionHeight(A.posY, difficulty);
@@ -283,7 +283,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         a[B.posY][B.posX] = ' ';
         for (int i = A.posX; i <= B.posX + 1; i++)
         {
-            DeleteCude(a, difficulty, A);
+            DeleteCube(a, difficulty, A);
             A.posX = i;
         }
         return true;
@@ -301,7 +301,7 @@ bool checkLine(char **&a, Selected A, Selected B, int difficulty)
         a[B.posY][B.posX] = ' ';
         for (int i = A.posY; i <= B.posY + 1; i++)
         {
-            DeleteCude(a, difficulty, A);
+            DeleteCube(a, difficulty, A);
             A.posY = i;
         }
         return true;
