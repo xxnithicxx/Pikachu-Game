@@ -121,7 +121,7 @@ void SetWindowSize(int difficulty)
 {
     // SHORT is the type of variable in WINAPI
     SHORT width = difficulty * 11 + 40; // Width of console
-    SHORT height = difficulty * 5 + 3;  // Height of console
+    SHORT height = difficulty * 5 + 5;  // Height of console
 
     HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -1280,8 +1280,6 @@ void helpMove(char **&a, int difficulty)
             }
         }
     }
-
-
 }
 
 void createMatrixPikachu(char **&a, int difficulty)
@@ -1354,18 +1352,103 @@ void releaseMatrix(char **a, int difficulty)
     free(a);
 }
 
+SHORT coordinateH(char **a, int difficulty, bool up, Selected cod)
+{
+    if (up == true)
+    {
+
+        for (SHORT i = cod.posY - 1; i >= 0; i--)
+        {
+            if (a[i][cod.posX] != ' ')
+            {
+                return i;
+            }
+        }
+
+        for (SHORT i = difficulty - 1; i > cod.posY; i--)
+        {
+            if (a[i][cod.posX] != ' ')
+            {
+                return i;
+            }
+        }
+
+        return cod.posY;
+    }
+
+    for (SHORT i = cod.posY + 1; i < difficulty; i++)
+    {
+        if (a[i][cod.posX] != ' ')
+        {
+            return i;
+        }
+    }
+
+    for (SHORT i = 0; i <= cod.posY; i++)
+    {
+        if (a[i][cod.posX] != ' ')
+        {
+            return i;
+        }
+    }
+
+    return cod.posY;
+}
+
+SHORT coordinateV(char **a, int difficulty, bool left, Selected cod)
+{
+    if (left == true)
+    {
+        for (SHORT i = cod.posX - 1; i >= 0; i--)
+        {
+            if (a[cod.posY][i] != ' ')
+            {
+                return i;
+            }
+        }
+
+        for (SHORT i = difficulty - 1; i > cod.posX; i--)
+        {
+            if (a[cod.posY][i] != ' ')
+            {
+                return i;
+            }
+        }
+
+        return cod.posX;
+    }
+
+    for (SHORT i = cod.posX + 1; i < difficulty; i++)
+    {
+        if (a[cod.posY][i] != ' ')
+        {
+            return i;
+        }
+    }
+
+    for (SHORT i = 0; i < cod.posX; i--)
+    {
+        if (a[cod.posY][i] != ' ')
+        {
+            return i;
+        }
+    }
+
+    return cod.posX;
+}
+
 int main(int argc, char **argv)
 {
     MoveWindow(0, 0);
     char **matrix = NULL;
-    int difficulty = HARD;
+    int difficulty = EASY;
 
     system("cls");
     SetWindowSize(difficulty);
     SetConsoleTitleW(L"Pikachu"); // Change console title (L is for Unicode)
     // DisableResizeWindow();
     // DisableMaximizeButton();
-    // DisableCur();
+    DisableCur();
     // HideScrollbar();
     _setmode(_fileno(stdout), _O_U16TEXT);
 
@@ -1396,34 +1479,19 @@ int main(int argc, char **argv)
         switch (ch)
         {
         case ARROW_UP:
-            if (posY - 1 < 0)
-            {
-                posY = difficulty;
-            }
-            posY--;
+            posY = coordinateH(matrix, difficulty, true, Selected{posX, posY});
             break;
         case ARROW_DOWN:
-            if (posY + 1 >= difficulty)
-            {
-                posY = 0;
-                break;
-            }
-            posY++;
+
+            posY = coordinateH(matrix, difficulty, false, Selected{posX, posY});
             break;
         case ARROW_LEFT:
-            if (posX - 1 < 0)
-            {
-                posX = difficulty;
-            }
-            posX--;
+
+            posX = coordinateV(matrix, difficulty, true, Selected{posX, posY});
             break;
         case ARROW_RIGHT:
-            if (posX + 1 >= difficulty)
-            {
-                posX = 0;
-                break;
-            }
-            posX++;
+
+            posX = coordinateV(matrix, difficulty, false, Selected{posX, posY});
             break;
         case HELP:
             helpMove(matrix, difficulty);
